@@ -1,0 +1,23 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Force UTF-8 encoding for text files
+*.ts text eol=lf encoding=utf-8
+*.tsx text eol=lf encoding=utf-8
+*.js text eol=lf encoding=utf-8
+*.jsx text eol=lf encoding=utf-8
+*.json text eol=lf encoding=utf-8
+*.css text eol=lf encoding=utf-8
+*.md text eol=lf encoding=utf-8
+*.html text eol=lf encoding=utf-8
+
+# Denote all files that are truly binary and should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

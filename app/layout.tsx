@@ -23,6 +23,9 @@ export default function RootLayout({
       lang="vi"
       className={`${inter.variable} h-full antialiased`}
     >
+      <head>
+        <meta charSet="UTF-8" />
+      </head>
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
           {children}
