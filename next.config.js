@@ -11,11 +11,6 @@ const nextConfig = {
     // Disable trailing slash
     trailingSlash: false,
 
-    // Ignore ESLint during build
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-
     // Ignore TypeScript errors during build
     typescript: {
         ignoreBuildErrors: true,
