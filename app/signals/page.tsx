@@ -167,28 +167,29 @@ export default function SignalsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white shadow">
-                <div className="container mx-auto px-4 py-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Header - Mobile Optimized */}
+            <header className="bg-white shadow sticky top-0 z-10">
+                <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/"
-                                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors active:scale-95"
+                                aria-label="Quay lại trang chủ"
                             >
                                 <ArrowLeft className="h-5 w-5 text-gray-700" />
                             </Link>
                             <div className="p-2 bg-blue-100 rounded-lg">
-                                <TrendingUp className="h-8 w-8 text-blue-600" />
+                                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Tín Hiệu Giao Dịch</h1>
-                                <p className="text-gray-600">Danh sách tín hiệu giao dịch AI với mục tiêu lợi nhuận và cắt lỗ</p>
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Tín Hiệu Giao Dịch</h1>
+                                <p className="text-sm sm:text-base text-gray-600 truncate">Danh sách tín hiệu giao dịch AI</p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <div className="text-sm text-gray-600">
+                        <div className="flex items-center justify-between sm:justify-end gap-2">
+                            <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
                                 <span className="font-medium">{filteredSignals.length}</span> tín hiệu
                             </div>
                         </div>
@@ -196,19 +197,27 @@ export default function SignalsPage() {
                 </div>
             </header>
 
-            <div className="container mx-auto px-4 py-8">
-                {/* Filters Panel */}
-                <div className="bg-white rounded-lg shadow mb-6">
-                    <div className="p-6 border-b">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Filter className="h-5 w-5 text-gray-500" />
-                            <h2 className="text-lg font-semibold text-gray-900">Bộ Lọc</h2>
+            <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+                {/* Filters Panel - Mobile Optimized */}
+                <div className="bg-white rounded-lg shadow mb-4 sm:mb-6">
+                    <div className="p-4 sm:p-6 border-b">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Filter className="h-5 w-5 text-gray-500" />
+                                <h2 className="text-lg font-semibold text-gray-900">Bộ Lọc</h2>
+                            </div>
+                            <button
+                                onClick={clearFilters}
+                                className="text-sm text-gray-600 hover:text-gray-900 px-3 py-1.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-95"
+                            >
+                                Xóa tất cả
+                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="space-y-4">
                             {/* Symbol Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                                     Mã Chứng Khoán
                                 </label>
                                 <input
@@ -216,50 +225,43 @@ export default function SignalsPage() {
                                     value={filters.symbol}
                                     onChange={(e) => handleFilterChange('symbol', e.target.value)}
                                     placeholder="VD: VN30, VIC, VHM..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
                                 />
                             </div>
 
-                            {/* Start Date Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Từ Ngày
-                                </label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="date"
-                                        value={filters.startDate}
-                                        onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
+                            {/* Date Range Filters */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {/* Start Date Filter */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Từ Ngày
+                                    </label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input
+                                            type="date"
+                                            value={filters.startDate}
+                                            onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* End Date Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Đến Ngày
-                                </label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="date"
-                                        value={filters.endDate}
-                                        onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    />
+                                {/* End Date Filter */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Đến Ngày
+                                    </label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input
+                                            type="date"
+                                            value={filters.endDate}
+                                            onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* Clear Filters Button */}
-                            <div className="flex items-end">
-                                <button
-                                    onClick={clearFilters}
-                                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                >
-                                    Xóa Bộ Lọc
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -291,7 +293,7 @@ export default function SignalsPage() {
                     )}
                 </div>
 
-                {/* Signals Table */}
+                {/* Signals Display - Mobile Cards & Desktop Table */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
                     {filteredSignals.length === 0 ? (
                         <div className="p-8 text-center">
@@ -304,88 +306,149 @@ export default function SignalsPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Ngày
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Mã CK
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Giá Vào
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Mục Tiêu
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Cắt Lỗ
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Độ Tin Cậy
-                                        </th>
-                                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Lý Do
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
+                        <>
+                            {/* Mobile Cards View */}
+                            <div className="md:hidden">
+                                <div className="divide-y divide-gray-200">
                                     {filteredSignals.map((signal) => (
-                                        <tr key={signal.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {formatDate(signal)}
+                                        <div key={signal.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                            {/* Header Row */}
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-sm font-bold text-gray-900">{signal.symbol}</span>
+                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
+                                                            {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">{formatDate(signal)}</div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-bold text-gray-900">
-                                                    {signal.symbol}
+                                            </div>
+
+                                            {/* Price Information */}
+                                            <div className="grid grid-cols-3 gap-3 mb-3">
+                                                <div className="text-center">
+                                                    <div className="text-xs text-gray-500 mb-1">Giá Vào</div>
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {signal.entry_price.toLocaleString('vi-VN')}
+                                                    </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {signal.entry_price.toLocaleString('vi-VN')}
+                                                <div className="text-center">
+                                                    <div className="text-xs text-gray-500 mb-1">Mục Tiêu</div>
+                                                    <div className="text-sm font-medium text-green-600">
+                                                        {signal.take_profit_price.toLocaleString('vi-VN')}
+                                                    </div>
+                                                    <div className="text-xs text-green-500">
+                                                        +{(((signal.take_profit_price - signal.entry_price) / signal.entry_price) * 100).toFixed(2)}%
+                                                    </div>
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-green-600">
-                                                    {signal.take_profit_price.toLocaleString('vi-VN')}
+                                                <div className="text-center">
+                                                    <div className="text-xs text-gray-500 mb-1">Cắt Lỗ</div>
+                                                    <div className="text-sm font-medium text-red-600">
+                                                        {signal.stop_loss_price.toLocaleString('vi-VN')}
+                                                    </div>
+                                                    <div className="text-xs text-red-500">
+                                                        -{(((signal.entry_price - signal.stop_loss_price) / signal.entry_price) * 100).toFixed(2)}%
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs text-gray-500">
-                                                    +{(((signal.take_profit_price - signal.entry_price) / signal.entry_price) * 100).toFixed(2)}%
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-red-600">
-                                                    {signal.stop_loss_price.toLocaleString('vi-VN')}
-                                                </div>
-                                                <div className="text-xs text-gray-500">
-                                                    -{(((signal.entry_price - signal.stop_loss_price) / signal.entry_price) * 100).toFixed(2)}%
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
-                                                    {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm text-gray-700 max-w-xs">
-                                                    {signal.reason || 'Không có lý do cụ thể'}
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            </div>
+
+                                            {/* Reason */}
+                                            <div className="text-sm text-gray-700">
+                                                <div className="text-xs text-gray-500 mb-1">Lý do:</div>
+                                                <div className="line-clamp-2">{signal.reason || 'Không có lý do cụ thể'}</div>
+                                            </div>
+                                        </div>
                                     ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                </div>
+                            </div>
+
+                            {/* Desktop Table View */}
+                            <div className="hidden md:block">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Ngày
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Mã CK
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Giá Vào
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Mục Tiêu
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Cắt Lỗ
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Độ Tin Cậy
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Lý Do
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {filteredSignals.map((signal) => (
+                                                <tr key={signal.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {formatDate(signal)}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-bold text-gray-900">
+                                                            {signal.symbol}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {signal.entry_price.toLocaleString('vi-VN')}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-green-600">
+                                                            {signal.take_profit_price.toLocaleString('vi-VN')}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            +{(((signal.take_profit_price - signal.entry_price) / signal.entry_price) * 100).toFixed(2)}%
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-medium text-red-600">
+                                                            {signal.stop_loss_price.toLocaleString('vi-VN')}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            -{(((signal.entry_price - signal.stop_loss_price) / signal.entry_price) * 100).toFixed(2)}%
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
+                                                            {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-sm text-gray-700 max-w-xs">
+                                                            {signal.reason || 'Không có lý do cụ thể'}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
                     )}
 
                     {/* Summary */}
                     {filteredSignals.length > 0 && (
-                        <div className="px-6 py-4 bg-gray-50 border-t">
-                            <div className="flex justify-between items-center">
+                        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t">
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
                                 <div className="text-sm text-gray-600">
                                     Hiển thị <span className="font-medium">{filteredSignals.length}</span> tín hiệu
                                 </div>
@@ -404,24 +467,24 @@ export default function SignalsPage() {
                     )}
                 </div>
 
-                {/* Stats Cards */}
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg border border-blue-100">
+                {/* Stats Cards - Mobile Optimized */}
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 sm:p-6 rounded-lg border border-blue-100">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-blue-600 font-medium">Tổng Tín Hiệu</p>
-                                <p className="text-2xl font-bold text-gray-900">{tradingSignals.length}</p>
+                                <p className="text-xs sm:text-sm text-blue-600 font-medium">Tổng Tín Hiệu</p>
+                                <p className="text-xl sm:text-2xl font-bold text-gray-900">{tradingSignals.length}</p>
                             </div>
-                            <TrendingUp className="h-8 w-8 text-blue-500" />
+                            <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Tín hiệu giao dịch trong hệ thống</p>
                     </div>
 
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-100">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 rounded-lg border border-green-100">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-green-600 font-medium">Độ Tin Cậy TB</p>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-xs sm:text-sm text-green-600 font-medium">Độ Tin Cậy TB</p>
+                                <p className="text-xl sm:text-2xl font-bold text-gray-900">
                                     {(() => {
                                         if (tradingSignals.length === 0) return '0%';
                                         const totalConfidence = tradingSignals.reduce((sum, signal) => {
@@ -431,18 +494,18 @@ export default function SignalsPage() {
                                     })()}
                                 </p>
                             </div>
-                            <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <span className="text-green-600 font-bold">✓</span>
+                            <div className="h-6 w-6 sm:h-8 sm:w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <span className="text-green-600 font-bold text-sm sm:text-base">✓</span>
                             </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Độ tin cậy trung bình của tín hiệu</p>
                     </div>
 
-                    <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-6 rounded-lg border border-purple-100">
+                    <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-4 sm:p-6 rounded-lg border border-purple-100 sm:col-span-2 lg:col-span-1">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-purple-600 font-medium">Mã CK Phổ Biến</p>
-                                <p className="text-2xl font-bold text-gray-900">
+                                <p className="text-xs sm:text-sm text-purple-600 font-medium">Mã CK Phổ Biến</p>
+                                <p className="text-xl sm:text-2xl font-bold text-gray-900">
                                     {(() => {
                                         const symbolCounts: Record<string, number> = {};
                                         tradingSignals.forEach(signal => {
@@ -454,19 +517,19 @@ export default function SignalsPage() {
                                 </p>
                             </div>
                             <div className="flex gap-1">
-                                <div className="h-8 w-2 bg-purple-400 rounded-full"></div>
-                                <div className="h-8 w-2 bg-purple-400 rounded-full"></div>
+                                <div className="h-6 w-1 sm:h-8 sm:w-2 bg-purple-400 rounded-full"></div>
+                                <div className="h-6 w-1 sm:h-8 sm:w-2 bg-purple-400 rounded-full"></div>
                             </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">Mã chứng khoán có nhiều tín hiệu nhất</p>
                     </div>
                 </div>
 
-                {/* Back to Dashboard */}
-                <div className="mt-8 text-center">
+                {/* Back to Dashboard - Mobile Optimized */}
+                <div className="mt-6 sm:mt-8 text-center">
                     <Link
                         href="/"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors"
+                        className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 w-full sm:w-auto bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors active:scale-95"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Quay lại Bảng Điều Khiển
