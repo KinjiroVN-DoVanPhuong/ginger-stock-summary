@@ -15,9 +15,16 @@ export default function SignalsPage() {
     const [filteredSignals, setFilteredSignals] = useState<TradingSignal[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    // Get current date in YYYY-MM-DD format for default filter
+    const getCurrentDateString = () => {
+        const today = new Date();
+        return format(today, 'yyyy-MM-dd');
+    };
+    
     const [filters, setFilters] = useState({
-        startDate: '',
-        endDate: '',
+        startDate: getCurrentDateString(),
+        endDate: getCurrentDateString(),
         symbol: '',
     });
 
