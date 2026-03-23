@@ -16,6 +16,17 @@ export default function SignalsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
+    const getYesterdayDateString = () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        // check if yesterday is a weekend, if so, set to last Friday
+        if (yesterday.getDay() === 0) { // Sunday
+            yesterday.setDate(yesterday.getDate() - 2); 
+        } else if (yesterday.getDay() === 6) { // Saturday
+            yesterday.setDate(yesterday.getDate() - 1); 
+        }
+        return format(yesterday, 'yyyy-MM-dd');
+    };
     // Get current date in YYYY-MM-DD format for default filter
     const getCurrentDateString = () => {
         const today = new Date();
@@ -23,7 +34,7 @@ export default function SignalsPage() {
     };
     
     const [filters, setFilters] = useState({
-        startDate: getCurrentDateString(),
+        startDate: getYesterdayDateString(),
         endDate: getCurrentDateString(),
         symbol: '',
     });
