@@ -120,25 +120,25 @@ export const analysisService = {
         return requests.filter(request => request.status === status);
     },
 
-    // Mark request as processing
-    async markAsProcessing(id: string): Promise<void> {
+    // Mark request as running
+    async markAsRunning(id: string): Promise<void> {
         await this.updateAnalyseRequest(id, {
-            status: 'processing'
+            status: 'running'
         });
     },
 
-    // Mark request as completed with result
-    async markAsCompleted(id: string, result: string): Promise<void> {
+    // Mark request as done with result
+    async markAsDone(id: string, result: string): Promise<void> {
         await this.updateAnalyseRequest(id, {
-            status: 'completed',
+            status: 'done',
             result
         });
     },
 
-    // Mark request as failed
-    async markAsFailed(id: string, error?: string): Promise<void> {
+    // Mark request as error
+    async markAsError(id: string, error?: string): Promise<void> {
         await this.updateAnalyseRequest(id, {
-            status: 'failed',
+            status: 'error',
             result: error || 'Phân tích thất bại'
         });
     }

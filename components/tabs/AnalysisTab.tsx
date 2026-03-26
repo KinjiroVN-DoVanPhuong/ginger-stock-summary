@@ -10,7 +10,7 @@ export default function AnalysisTab() {
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<AnalyseRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<AnalyseRequest[]>([]);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'request' | 'processing' | 'completed' | 'failed'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'request' | 'running' | 'error' | 'done'>('all');
 
   // Load analysis requests on component mount
   useEffect(() => {
@@ -71,11 +71,11 @@ export default function AnalysisTab() {
     switch (status) {
       case 'request':
         return 'bg-blue-100 text-blue-800';
-      case 'processing':
+      case 'running':
         return 'bg-yellow-100 text-yellow-800';
-      case 'completed':
+      case 'done':
         return 'bg-green-100 text-green-800';
-      case 'failed':
+      case 'error':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -86,11 +86,11 @@ export default function AnalysisTab() {
     switch (status) {
       case 'request':
         return <Clock className="h-4 w-4" />;
-      case 'processing':
+      case 'running':
         return <RefreshCw className="h-4 w-4 animate-spin" />;
-      case 'completed':
+      case 'done':
         return <CheckCircle className="h-4 w-4" />;
-      case 'failed':
+      case 'error':
         return <XCircle className="h-4 w-4" />;
       default:
         return <AlertCircle className="h-4 w-4" />;
@@ -177,9 +177,9 @@ export default function AnalysisTab() {
           <div className="bg-yellow-50 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-yellow-600 font-medium">Đang Xử Lý</p>
+                <p className="text-xs text-yellow-600 font-medium">Đang Chạy</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {requests.filter(req => req.status === 'processing').length}
+                  {requests.filter(req => req.status === 'running').length}
                 </p>
               </div>
               <RefreshCw className="h-6 w-6 text-yellow-500" />
@@ -190,7 +190,7 @@ export default function AnalysisTab() {
               <div>
                 <p className="text-xs text-green-600 font-medium">Hoàn Thành</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {requests.filter(req => req.status === 'completed').length}
+                  {requests.filter(req => req.status === 'done').length}
                 </p>
               </div>
               <CheckCircle className="h-6 w-6 text-green-500" />
@@ -199,9 +199,9 @@ export default function AnalysisTab() {
           <div className="bg-red-50 p-4 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-red-600 font-medium">Thất Bại</p>
+                <p className="text-xs text-red-600 font-medium">Lỗi</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {requests.filter(req => req.status === 'failed').length}
+                  {requests.filter(req => req.status === 'error').length}
                 </p>
               </div>
               <XCircle className="h-6 w-6 text-red-500" />
@@ -225,22 +225,22 @@ export default function AnalysisTab() {
           Đang Chờ ({requests.filter(req => req.status === 'request').length})
         </button>
         <button
-          onClick={() => setFilterStatus('processing')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'processing' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => setFilterStatus('running')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'running' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
         >
-          Đang Xử Lý ({requests.filter(req => req.status === 'processing').length})
+          Đang Chạy ({requests.filter(req => req.status === 'running').length})
         </button>
         <button
-          onClick={() => setFilterStatus('completed')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'completed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => setFilterStatus('done')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'done' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
         >
-          Hoàn Thành ({requests.filter(req => req.status === 'completed').length})
+          Hoàn Thành ({requests.filter(req => req.status === 'done').length})
         </button>
         <button
-          onClick={() => setFilterStatus('failed')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'failed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => setFilterStatus('error')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'error' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
         >
-          Thất Bại ({requests.filter(req => req.status === 'failed').length})
+          Lỗi ({requests.filter(req => req.status === 'error').length})
         </button>
       </div>
 
@@ -275,8 +275,8 @@ export default function AnalysisTab() {
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                             {getStatusIcon(request.status)}
                             {request.status === 'request' ? 'Đang chờ' :
-                             request.status === 'processing' ? 'Đang xử lý' :
-                             request.status === 'completed' ? 'Hoàn thành' : 'Thất bại'}
+                             request.status === 'running' ? 'Đang chạy' :
+                             request.status === 'done' ? 'Hoàn thành' : 'Lỗi'}
                           </span>
                         </div>
                         <div className="text-xs text-gray-500">ID: {request.id?.substring(0, 8)}...</div>
@@ -350,8 +350,8 @@ export default function AnalysisTab() {
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                             {getStatusIcon(request.status)}
                             {request.status === 'request' ? 'Đang chờ' :
-                             request.status === 'processing' ? 'Đang xử lý' :
-                             request.status === 'completed' ? 'Hoàn thành' : 'Thất bại'}
+                             request.status === 'running' ? 'Đang chạy' :
+                             request.status === 'done' ? 'Hoàn thành' : 'Lỗi'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -388,7 +388,7 @@ export default function AnalysisTab() {
               <div className="text-sm text-gray-600">
                 Tỷ lệ hoàn thành: <span className="font-medium">
                   {(() => {
-                    const completed = requests.filter(req => req.status === 'completed').length;
+                    const completed = requests.filter(req => req.status === 'done').length;
                     return requests.length > 0 ? `${((completed / requests.length) * 100).toFixed(1)}%` : '0%';
                   })()}
                 </span>
