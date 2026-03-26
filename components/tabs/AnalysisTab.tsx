@@ -107,6 +107,27 @@ export default function AnalysisTab() {
     });
   };
 
+  const formatResultText = (text: string): React.ReactNode => {
+    if (!text) return text;
+    
+    // 1. Add new lines after periods
+    let formatted = text.replace(/\. /g, '.\n');
+    
+    // 2. Handle bold text: **text** -> <strong>text</strong>
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Split by new lines and create React elements
+    return formatted.split('\n').map((line, index) => {
+      // Handle HTML in the line (for bold text)
+      const htmlLine = { __html: line };
+      return (
+        <div key={index} className="mb-1 last:mb-0">
+          <span dangerouslySetInnerHTML={htmlLine} />
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -299,7 +320,9 @@ export default function AnalysisTab() {
                     {request.result && (
                       <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                         <div className="text-xs text-gray-500 mb-1">Kết quả phân tích:</div>
-                        <div className="text-sm text-gray-700">{request.result}</div>
+                        <div className="text-sm text-gray-700 whitespace-pre-line">
+                          {formatResultText(request.result)}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -366,7 +389,7 @@ export default function AnalysisTab() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-700 max-w-xs">
-                            {request.result || 'Đang chờ kết quả...'}
+                            {request.result ? formatResultText(request.result) : 'Đang chờ kết quả...'}
                           </div>
                         </td>
                       </tr>
