@@ -1,15 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DashboardHeader from '@/components/DashboardHeader';
 import MetricsCards from '@/components/MetricsCards';
 import TradesTable from '@/components/TradesTable';
 import ChartsSection from '@/components/ChartsSection';
 import FiltersPanel from '@/components/FiltersPanel';
 import { tradingService } from '@/services/tradingService';
 import { TradingSignal, TradeResult, MatchedTrade, FilterOptions } from '@/types/trading';
+import { Home as HomeIcon, TrendingUp, BarChart3, Activity } from 'lucide-react';
+
+// Import tab components
+import HomeTab from '@/components/tabs/HomeTab';
+import TransactionsTab from '@/components/tabs/TransactionsTab';
+import SignalsTab from '@/components/tabs/SignalsTab';
+import AnalysisTab from '@/components/tabs/AnalysisTab';
+
+type TabType = 'home' | 'transactions' | 'signals' | 'analysis';
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
   const [tradeResults, setTradeResults] = useState<TradeResult[]>([]);
   const [matchedTrades, setMatchedTrades] = useState<MatchedTrade[]>([]);
@@ -81,11 +90,6 @@ export default function Home() {
     setFilters(newFilters);
   };
 
-  const handleAnalyzePerformance = async () => {
-    // This would call an AI API in a real implementation
-    alert('Tính năng phân tích AI sẽ được triển khai ở đây. Điều này sẽ gọi API Gemini để phân tích hiệu suất giao dịch.');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -112,60 +116,68 @@ export default function Home() {
     );
   }
 
+  const tabs = [
+    { id: 'home', label: 'Tổng Quan', icon: <HomeIcon className="h-4 w-4 sm:h-5 sm:w-5" /> },
+    { id: 'transactions', label: 'Giao Dịch', icon: <Activity className="h-4 w-4 sm:h-5 sm:w-5" /> },
+    { id: 'signals', label: 'Tín Hiệu', icon: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> },
+    { id: 'analysis', label: 'Phân Tích', icon: <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" /> },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader
-        onAnalyzePerformance={handleAnalyzePerformance}
-        totalTrades={matchedTrades.length}
-      />
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Filters Panel */}
-          <div className="lg:col-span-1">
-            <FiltersPanel
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              symbols={Array.from(new Set(matchedTrades.map(trade => trade.symbol)))}
-            />
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            <MetricsCards trades={filteredTrades} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="lg:col-span-2">
-                <TradesTable trades={filteredTrades} />
-              </div>
-
-              <div className="lg:col-span-2">
-                <ChartsSection trades={filteredTrades} />
-              </div>
-            </div>
+      <div className="container mx-auto px-4 py-6">
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 border-b border-gray-200">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`
+                  flex items-center justify-center sm:justify-start gap-2 px-4 py-3 sm:py-4 text-sm font-medium transition-colors
+                  ${activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }
+                  rounded-t-lg sm:rounded-t-none
+                `}
+              >
+                {tab.icon}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Data Summary */}
-        <div className="mt-8 p-4 bg-white rounded-lg shadow">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-sm text-gray-500">Tín Hiệu Giao Dịch</p>
-              <p className="text-2xl font-semibold">{tradingSignals.length}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-gray-500">Kết Quả Giao Dịch</p>
-              <p className="text-2xl font-semibold">{tradeResults.length}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-gray-500">Giao Dịch Đã Khớp</p>
-              <p className="text-2xl font-semibold">{matchedTrades.length}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-gray-500">Giao Dịch Đã Lọc</p>
-              <p className="text-2xl font-semibold">{filteredTrades.length}</p>
-            </div>
-          </div>
+        {/* Tab Content */}
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          {activeTab === 'home' && (
+            <HomeTab
+              tradingSignals={tradingSignals}
+              tradeResults={tradeResults}
+              matchedTrades={matchedTrades}
+            />
+          )}
+
+          {activeTab === 'transactions' && (
+            <TransactionsTab
+              matchedTrades={matchedTrades}
+              filteredTrades={filteredTrades}
+              filters={filters}
+              onFilterChange={handleFilterChange}
+            />
+          )}
+
+          {activeTab === 'signals' && (
+            <SignalsTab
+              tradingSignals={tradingSignals}
+            />
+          )}
+
+          {activeTab === 'analysis' && (
+            <AnalysisTab />
+          )}
         </div>
       </div>
     </div>
