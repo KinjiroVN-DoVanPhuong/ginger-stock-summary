@@ -31,6 +31,7 @@ export default function Home() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Load data on component mount
   useEffect(() => {
@@ -126,25 +127,70 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6">
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 border-b border-gray-200">
+        {/* Mobile Tab Menu Button */}
+        <div className="sm:hidden mb-4">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="flex items-center justify-between w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              {tabs.find(tab => tab.id === activeTab)?.icon}
+              <span className="font-medium">{tabs.find(tab => tab.id === activeTab)?.label}</span>
+            </div>
+            <svg
+              className={`w-5 h-5 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Mobile Tab Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id as TabType);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`
+                    flex items-center gap-3 w-full px-4 py-3 text-left transition-colors
+                    ${activeTab === tab.id
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                    }
+                    ${tab.id !== 'home' ? 'border-t border-gray-100' : ''}
+                  `}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Tab Navigation */}
+        <div className="hidden sm:block mb-6">
+          <div className="flex gap-2 border-b border-gray-200">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={`
-                  flex items-center justify-center sm:justify-start gap-2 px-4 py-3 sm:py-4 text-sm font-medium transition-colors
+                  flex items-center justify-start gap-2 px-4 py-4 text-sm font-medium transition-colors
                   ${activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50 sm:bg-transparent'
+                    ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }
-                  rounded-t-lg sm:rounded-t-none
                 `}
               >
                 {tab.icon}
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                <span>{tab.label}</span>
               </button>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Filter, TrendingUp } from 'lucide-react';
+import { Calendar, Filter, TrendingUp, X } from 'lucide-react';
 import { tradingService } from '@/services/tradingService';
 import { TradingSignal } from '@/types/trading';
 import { format } from 'date-fns';
@@ -16,6 +16,8 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
     endDate: '',
     symbol: '',
   });
+  const [selectedSignal, setSelectedSignal] = useState<TradingSignal | null>(null);
+  const [showReasonDialog, setShowReasonDialog] = useState(false);
 
   // Get yesterday date string for default filter
   const getYesterdayDateString = () => {
@@ -289,7 +291,18 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                     {/* Reason */}
                     <div className="text-sm text-gray-700">
                       <div className="text-xs text-gray-500 mb-1">Lý do:</div>
-                      <div className="line-clamp-2">{signal.reason || 'Không có lý do cụ thể'}</div>
+                      <div className="line-clamp-2 mb-2">{signal.reason || 'Không có lý do cụ thể'}</div>
+                      {signal.reason && signal.reason.length > 100 && (
+                        <button
+                          onClick={() => {
+                            setSelectedSignal(signal);
+                            setShowReasonDialog(true);
+                          }}
+                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Xem đầy đủ lý do →
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -457,6 +470,90 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
           <p className="text-xs text-gray-500 mt-2">Mã chứng khoán có nhiều tín hiệu nhất</p>
         </div>
       </div>
+
+      {/* Reason Dialog */}
+      {showReasonDialog && selectedSignal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Lý do giao dịch</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedSignal.symbol} • {formatDate(selectedSignal)}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReasonDialog(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-4">
+                {/* Signal Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Giá vào</p>
+                    <p className="font-medium">{selectedSignal.entry_price.toLocaleString('vi-VN')}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Độ tin cậy</p>
+                    <p className={`font-medium ${getConfidenceColor(selectedSignal.confidence)} px-2 py-1 rounded-full inline-block`}>
+                      {selectedSignal.confidence < 1 ? (selectedSignal.confidence * 100).toFixed(1) : selectedSignal.confidence.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Full Reason */}
+                <div>
+                  <p className="text-sm text-gray-500 mb-2">Lý do chi tiết:</p>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-700 whitespace-pre-wrap">
+                      {selectedSignal.reason || 'Không có lý do cụ thể'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Price Targets */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                    <p className="text-xs text-green-600 mb-1">Mục tiêu lợi nhuận</p>
+                    <p className="font-medium text-green-700">
+                      {selectedSignal.take_profit_price.toLocaleString('vi-VN')}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      +{(((selectedSignal.take_profit_price - selectedSignal.entry_price) / selectedSignal.entry_price) * 100).toFixed(2)}%
+                    </p>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                    <p className="text-xs text-red-600 mb-1">Mức cắt lỗ</p>
+                    <p className="font-medium text-red-700">
+                      {selectedSignal.stop_loss_price.toLocaleString('vi-VN')}
+                    </p>
+                    <p className="text-xs text-red-600">
+                      -{(((selectedSignal.entry_price - selectedSignal.stop_loss_price) / selectedSignal.entry_price) * 100).toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="p-4 border-t">
+              <button
+                onClick={() => setShowReasonDialog(false)}
+                className="w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

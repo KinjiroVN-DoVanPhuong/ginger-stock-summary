@@ -49,12 +49,6 @@ export default function HomeTab({
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Chào mừng đến với Ginger Stock AI</h1>
-        <p className="text-blue-100">Hệ thống phân tích và giao dịch chứng khoán thông minh</p>
-      </div>
-
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-100">
@@ -93,12 +87,12 @@ export default function HomeTab({
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm text-amber-600 font-medium">Lợi Nhuận</p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{totalReturn.toFixed(1)}%</p>
+              <p className="text-xs sm:text-sm text-amber-600 font-medium">Lợi Nhuận TB</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{avgReturn.toFixed(1)}%</p>
             </div>
             <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-amber-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-2">Tổng lợi nhuận (%)</p>
+          <p className="text-xs text-gray-500 mt-2">Lợi nhuận trung bình (%)</p>
         </div>
       </div>
 
@@ -189,96 +183,6 @@ export default function HomeTab({
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Truy Cập Nhanh</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Activity className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">Xem Giao Dịch</p>
-                <p className="text-sm text-gray-600">{matchedTrades.length} giao dịch</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">Xem Tín Hiệu</p>
-                <p className="text-sm text-gray-600">{tradingSignals.length} tín hiệu</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">Phân Tích AI</p>
-                <p className="text-sm text-gray-600">Gửi yêu cầu phân tích</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 border border-gray-200 rounded-lg hover:border-amber-300 hover:bg-amber-50 transition-colors cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
-                <Target className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="font-medium text-gray-900">Mục Tiêu</p>
-                <p className="text-sm text-gray-600">Đặt mục tiêu giao dịch</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Hoạt Động Gần Đây</h3>
-          <span className="text-sm text-blue-600 font-medium">Xem tất cả</span>
-        </div>
-        <div className="space-y-3">
-          {matchedTrades.slice(0, 5).map((trade, index) => (
-            <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${trade.result.status === 'WIN' ? 'bg-green-100' : trade.result.status === 'LOSS' ? 'bg-red-100' : 'bg-blue-100'}`}>
-                  {trade.result.status === 'WIN' ? (
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                  ) : trade.result.status === 'LOSS' ? (
-                    <TrendingDown className="h-4 w-4 text-red-600" />
-                  ) : (
-                    <Package className="h-4 w-4 text-blue-600" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{trade.symbol}</p>
-                  <p className="text-sm text-gray-600">
-                    {trade.result.status === 'WIN' ? 'Thắng' : trade.result.status === 'LOSS' ? 'Thua' : 'Đang nắm giữ'}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className={`font-medium ${trade.pnl_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {trade.pnl_percentage >= 0 ? '+' : ''}{trade.pnl_percentage.toFixed(1)}%
-                </p>
-                <p className="text-sm text-gray-600">{trade.pnl_absolute.toLocaleString('vi-VN')} VND</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
