@@ -1,9 +1,8 @@
+import { useState } from 'react';
 import { MatchedTrade, FilterOptions } from '@/types/trading';
 import TradesTable from '@/components/TradesTable';
-import FiltersPanel from '@/components/FiltersPanel';
-import { DollarSign, TrendingUp, Calendar, Package } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import FiltersPopup from '@/components/FiltersPopup';
+import { DollarSign, TrendingUp, Calendar, Package, Filter, Percent } from 'lucide-react';
 
 interface TransactionsTabProps {
   matchedTrades: MatchedTrade[];
@@ -18,6 +17,8 @@ export default function TransactionsTab({
   filters,
   onFilterChange
 }: TransactionsTabProps) {
+  const [showFilters, setShowFilters] = useState(false);
+  
   // Calculate transaction statistics
   const completedTrades = matchedTrades.filter(trade => trade.result.status !== 'HOLDING');
   const holdingTrades = matchedTrades.filter(trade => trade.result.status === 'HOLDING');
@@ -29,6 +30,11 @@ export default function TransactionsTab({
   const totalLoss = losingTrades.reduce((sum, trade) => sum + Math.abs(trade.pnl_absolute), 0);
   const netProfit = totalProfit - totalLoss;
 
+  // Calculate average profit percentage
+  const avgProfitPercentage = completedTrades.length > 0
+    ? completedTrades.reduce((sum, trade) => sum + trade.pnl_percentage, 0) / completedTrades.length
+    : 0;
+
   // Calculate average holding days
   const completedWithDates = completedTrades.filter(trade => trade.holding_days !== null);
   const avgHoldingDays = completedWithDates.length > 0
@@ -38,6 +44,25 @@ export default function TransactionsTab({
   // Get unique symbols
   const uniqueSymbols = Array.from(new Set(matchedTrades.map(trade => trade.symbol)));
 
+  // Calculate average profit by symbol
+  const symbolStats = uniqueSymbols.map(symbol => {
+    const symbolTrades = matchedTrades.filter(trade => trade.symbol === symbol);
+    const symbolCompleted = symbolTrades.filter(trade => trade.result.status !== 'HOLDING');
+    const avgProfit = symbolCompleted.length > 0
+      ? symbolCompleted.reduce((sum, trade) => sum + trade.pnl_percentage, 0) / symbolCompleted.length
+      : 0;
+    const symbolWins = symbolCompleted.filter(trade => trade.result.status === 'WIN').length;
+    const winRate = symbolCompleted.length > 0 ? (symbolWins / symbolCompleted.length) * 100 : 0;
+    
+    return {
+      symbol,
+      avgProfit,
+      winRate,
+      totalTrades: symbolTrades.length,
+      completedTrades: symbolCompleted.length
+    };
+  }).sort((a, b) => b.avgProfit - a.avgProfit);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -46,8 +71,17 @@ export default function TransactionsTab({
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Giao Dịch</h2>
           <p className="text-sm text-gray-600">Danh sách và thống kê giao dịch đã thực hiện</p>
         </div>
-        <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
-          Hiển thị <span className="font-bold">{filteredTrades.length}</span> giao dịch
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
+            Hiển thị <span className="font-bold">{filteredTrades.length}</span> giao dịch
+          </div>
+          <button
+            onClick={() => setShowFilters(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Filter className="h-4 w-4" />
+            Bộ Lọc
+          </button>
         </div>
       </div>
 
@@ -70,12 +104,12 @@ export default function TransactionsTab({
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs sm:text-sm text-green-600 font-medium">Lợi Nhuận Ròng</p>
+              <p className="text-xs sm:text-sm text-green-600 font-medium">Lợi Nhuận TB (%)</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                {netProfit >= 0 ? '+' : ''}{netProfit.toLocaleString('vi-VN')} VND
+                {avgProfitPercentage.toFixed(1)}%
               </p>
             </div>
-            <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+            <Percent className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
           </div>
           <div className="flex justify-between text-xs text-gray-500 mt-2">
             <span>Lãi: {totalProfit.toLocaleString('vi-VN')}</span>
@@ -113,72 +147,82 @@ export default function TransactionsTab({
         </div>
       </div>
 
-      {/* Filters and Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters Panel */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Bộ Lọc Giao Dịch</h3>
-            <FiltersPanel
-              filters={filters}
-              onFilterChange={onFilterChange}
-              symbols={uniqueSymbols}
-            />
+      {/* Average Profit by Symbol */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Lợi Nhuận Trung Bình Theo Mã CK</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {symbolStats.slice(0, 6).map((stat, index) => (
+            <div key={stat.symbol} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-gray-900">{stat.symbol}</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${stat.avgProfit >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {stat.avgProfit >= 0 ? '+' : ''}{stat.avgProfit.toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {stat.completedTrades} giao dịch đã hoàn thành
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-sm font-medium ${stat.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                    {stat.winRate.toFixed(0)}% thắng
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {stat.totalTrades} giao dịch
+                  </div>
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className={`h-2 rounded-full ${stat.avgProfit >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                  style={{ width: `${Math.min(Math.abs(stat.avgProfit) * 2, 100)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        {symbolStats.length > 6 && (
+          <div className="text-center text-sm text-gray-500 mt-4">
+            +{symbolStats.length - 6} mã chứng khoán khác
           </div>
+        )}
+      </div>
 
-          {/* Additional Stats */}
-          <div className="mt-6 bg-white rounded-lg shadow p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Thống Kê Chi Tiết</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Tổng số mã CK:</span>
-                <span className="font-medium">{uniqueSymbols.length}</span>
+      {/* Transactions Table */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-4 border-b flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Danh Sách Giao Dịch</h3>
+            <p className="text-sm text-gray-600">Các giao dịch đã được khớp với tín hiệu</p>
+          </div>
+          <button
+            onClick={() => setShowFilters(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Filter className="h-4 w-4" />
+            Bộ Lọc
+          </button>
+        </div>
+        <TradesTable trades={filteredTrades} />
+        
+        {/* Summary Footer */}
+        {filteredTrades.length > 0 && (
+          <div className="p-4 bg-gray-50 border-t">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
+              <div className="text-sm text-gray-600">
+                Hiển thị <span className="font-medium">{filteredTrades.length}</span> giao dịch
+                {filters.symbol !== 'ALL' && ` cho mã ${filters.symbol}`}
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Giao dịch đang nắm giữ:</span>
-                <span className="font-medium text-blue-600">{holdingTrades.length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Giao dịch đã hoàn thành:</span>
-                <span className="font-medium text-green-600">{completedTrades.length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Lợi nhuận trung bình:</span>
-                <span className={`font-medium ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {completedTrades.length > 0 ? (netProfit / completedTrades.length).toLocaleString('vi-VN') : '0'} VND
+              <div className="text-sm text-gray-600">
+                Lợi nhuận trung bình: <span className={`font-medium ${avgProfitPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {avgProfitPercentage >= 0 ? '+' : ''}{avgProfitPercentage.toFixed(1)}%
                 </span>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Transactions Table */}
-        <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Danh Sách Giao Dịch</h3>
-              <p className="text-sm text-gray-600">Các giao dịch đã được khớp với tín hiệu</p>
-            </div>
-            <TradesTable trades={filteredTrades} />
-            
-            {/* Summary Footer */}
-            {filteredTrades.length > 0 && (
-              <div className="p-4 bg-gray-50 border-t">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
-                  <div className="text-sm text-gray-600">
-                    Hiển thị <span className="font-medium">{filteredTrades.length}</span> giao dịch
-                    {filters.symbol !== 'ALL' && ` cho mã ${filters.symbol}`}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    Tổng lợi nhuận: <span className={`font-medium ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {netProfit >= 0 ? '+' : ''}{netProfit.toLocaleString('vi-VN')} VND
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Performance Summary */}
@@ -228,35 +272,39 @@ export default function TransactionsTab({
           </div>
           
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Thống Kê Theo Mã CK</h4>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {uniqueSymbols.slice(0, 5).map(symbol => {
-                const symbolTrades = matchedTrades.filter(trade => trade.symbol === symbol);
-                const symbolWins = symbolTrades.filter(trade => trade.result.status === 'WIN').length;
-                const symbolCompleted = symbolTrades.filter(trade => trade.result.status !== 'HOLDING').length;
-                const winRate = symbolCompleted > 0 ? (symbolWins / symbolCompleted) * 100 : 0;
-                
-                return (
-                  <div key={symbol} className="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                    <span className="text-sm font-medium text-gray-900">{symbol}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500">{symbolTrades.length} giao dịch</span>
-                      <span className={`text-xs font-medium ${winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
-                        {winRate.toFixed(0)}% thắng
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-              {uniqueSymbols.length > 5 && (
-                <div className="text-center text-xs text-gray-500 pt-2">
-                  +{uniqueSymbols.length - 5} mã chứng khoán khác
-                </div>
-              )}
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Thống Kê Chi Tiết</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Tổng số mã CK:</span>
+                <span className="font-medium">{uniqueSymbols.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Giao dịch đang nắm giữ:</span>
+                <span className="font-medium text-blue-600">{holdingTrades.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Giao dịch đã hoàn thành:</span>
+                <span className="font-medium text-green-600">{completedTrades.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Lợi nhuận ròng:</span>
+                <span className={`font-medium ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {netProfit >= 0 ? '+' : ''}{netProfit.toLocaleString('vi-VN')} VND
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Filters Popup */}
+      <FiltersPopup
+        filters={filters}
+        onFilterChange={onFilterChange}
+        symbols={uniqueSymbols}
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
+      />
     </div>
   );
 }
