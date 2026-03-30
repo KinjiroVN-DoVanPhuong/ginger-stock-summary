@@ -1,24 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import MetricsCards from '@/components/MetricsCards';
-import TradesTable from '@/components/TradesTable';
-import ChartsSection from '@/components/ChartsSection';
-import FiltersPanel from '@/components/FiltersPanel';
 import { tradingService } from '@/services/tradingService';
 import { TradingSignal, TradeResult, MatchedTrade, FilterOptions } from '@/types/trading';
-import { Home as HomeIcon, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { TrendingUp, BarChart3 } from 'lucide-react';
 
 // Import tab components
-import HomeTab from '@/components/tabs/HomeTab';
-import TransactionsTab from '@/components/tabs/TransactionsTab';
 import SignalsTab from '@/components/tabs/SignalsTab';
 import AnalysisTab from '@/components/tabs/AnalysisTab';
 
-type TabType = 'home' | 'transactions' | 'signals' | 'analysis';
+type TabType = 'signals' | 'analysis';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>('home');
+  const [activeTab, setActiveTab] = useState<TabType>('signals');
   const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
   const [tradeResults, setTradeResults] = useState<TradeResult[]>([]);
   const [matchedTrades, setMatchedTrades] = useState<MatchedTrade[]>([]);
@@ -118,8 +112,6 @@ export default function Home() {
   }
 
   const tabs = [
-    { id: 'home', label: 'Tổng Quan', icon: <HomeIcon className="h-4 w-4 sm:h-5 sm:w-5" /> },
-    { id: 'transactions', label: 'Giao Dịch', icon: <Activity className="h-4 w-4 sm:h-5 sm:w-5" /> },
     { id: 'signals', label: 'Tín Hiệu', icon: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> },
     { id: 'analysis', label: 'Phân Tích', icon: <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" /> },
   ];
@@ -163,7 +155,7 @@ export default function Home() {
                       ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-700 hover:bg-gray-50'
                     }
-                    ${tab.id !== 'home' ? 'border-t border-gray-100' : ''}
+                    ${tab.id !== 'signals' ? 'border-t border-gray-100' : ''}
                   `}
                 >
                   {tab.icon}
@@ -198,23 +190,6 @@ export default function Home() {
 
         {/* Tab Content */}
         <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          {activeTab === 'home' && (
-            <HomeTab
-              tradingSignals={tradingSignals}
-              tradeResults={tradeResults}
-              matchedTrades={matchedTrades}
-            />
-          )}
-
-          {activeTab === 'transactions' && (
-            <TransactionsTab
-              matchedTrades={matchedTrades}
-              filteredTrades={filteredTrades}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-            />
-          )}
-
           {activeTab === 'signals' && (
             <SignalsTab
               tradingSignals={tradingSignals}
