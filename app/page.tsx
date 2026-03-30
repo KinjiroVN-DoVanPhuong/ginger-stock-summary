@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { tradingService } from '@/services/tradingService';
-import { TradingSignal, TradeResult, MatchedTrade, FilterOptions } from '@/types/trading';
+import { TradingSignal, TradeResult, MatchedTrade } from '@/types/trading';
 import { TrendingUp, BarChart3 } from 'lucide-react';
 
 // Import tab components
@@ -16,13 +16,6 @@ export default function Home() {
   const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
   const [tradeResults, setTradeResults] = useState<TradeResult[]>([]);
   const [matchedTrades, setMatchedTrades] = useState<MatchedTrade[]>([]);
-  const [filteredTrades, setFilteredTrades] = useState<MatchedTrade[]>([]);
-  const [filters, setFilters] = useState<FilterOptions>({
-    symbol: 'ALL',
-    startDate: null,
-    endDate: null,
-    status: 'ALL'
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -42,7 +35,6 @@ export default function Home() {
 
         const matched = tradingService.matchTradesWithSignals(signals, results);
         setMatchedTrades(matched);
-        setFilteredTrades(matched);
       } catch (err) {
         console.error('Error loading data:', err);
         setError('Không thể tải dữ liệu giao dịch. Vui lòng kiểm tra kết nối Firebase của bạn.');
@@ -58,14 +50,12 @@ export default function Home() {
       setTradingSignals(signals);
       const matched = tradingService.matchTradesWithSignals(signals, tradeResults);
       setMatchedTrades(matched);
-      setFilteredTrades(tradingService.filterTrades(matched, filters));
     });
 
     const unsubscribeResults = tradingService.subscribeToTradeResults((results) => {
       setTradeResults(results);
       const matched = tradingService.matchTradesWithSignals(tradingSignals, results);
       setMatchedTrades(matched);
-      setFilteredTrades(tradingService.filterTrades(matched, filters));
     });
 
     // Cleanup subscriptions
@@ -74,16 +64,6 @@ export default function Home() {
       unsubscribeResults();
     };
   }, []);
-
-  // Apply filters when they change
-  useEffect(() => {
-    const filtered = tradingService.filterTrades(matchedTrades, filters);
-    setFilteredTrades(filtered);
-  }, [filters, matchedTrades]);
-
-  const handleFilterChange = (newFilters: FilterOptions) => {
-    setFilters(newFilters);
-  };
 
   if (loading) {
     return (
