@@ -8,6 +8,7 @@ export interface TradingSignal {
     reason?: string;
     date?: string;
     timestamp?: number;
+    buy_status?: 'chua_mua' | 'da_mua';
 }
 
 export interface TradeResult {

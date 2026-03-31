@@ -1,4 +1,4 @@
-import { ref, onValue, off, get, query, orderByChild, equalTo, push, set } from 'firebase/database';
+import { ref, onValue, off, get, query, orderByChild, equalTo, push, set, update } from 'firebase/database';
 import { database } from '@/lib/firebase/config';
 import { TradingSignal, TradeResult, MatchedTrade, DashboardMetrics, FilterOptions, BuyMonitoring } from '@/types/trading';
 import { differenceInDays, parseISO } from 'date-fns';
@@ -329,6 +329,14 @@ export const tradingService = {
         });
     },
 
+    // Update signal status
+    async updateSignalStatus(signalId: string, buyStatus: 'chua_mua' | 'da_mua'): Promise<void> {
+        const signalRef = ref(database, `${TRADING_SIGNALS_PATH}/${signalId}`);
+        await update(signalRef, {
+            buy_status: buyStatus
+        });
+    },
+
     // Buy monitoring functions
     async saveBuyMonitoring(buyData: Omit<BuyMonitoring, 'id' | 'created_at'>): Promise<string> {
         const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
@@ -340,6 +348,12 @@ export const tradingService = {
         };
 
         await set(newBuyRef, buyMonitoring);
+        
+        // Update signal status to 'da_mua'
+        if (buyData.signal_id) {
+            await this.updateSignalStatus(buyData.signal_id, 'da_mua');
+        }
+        
         return newBuyRef.key || '';
     },
 

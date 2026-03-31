@@ -88,6 +88,21 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
       });
     }
 
+    // Sort signals: chua_mua first, then da_mua, then by date (newest first)
+    filtered.sort((a, b) => {
+      // First sort by buy status: chua_mua comes before da_mua
+      const statusA = a.buy_status || 'chua_mua';
+      const statusB = b.buy_status || 'chua_mua';
+      
+      if (statusA === 'chua_mua' && statusB === 'da_mua') return -1;
+      if (statusA === 'da_mua' && statusB === 'chua_mua') return 1;
+      
+      // Then sort by date (newest first)
+      const dateA = a.date ? new Date(a.date).getTime() : (a.timestamp || 0);
+      const dateB = b.date ? new Date(b.date).getTime() : (b.timestamp || 0);
+      return dateB - dateA;
+    });
+
     setFilteredSignals(filtered);
   };
 
@@ -356,6 +371,11 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
                             {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
                           </span>
+                          {signal.buy_status === 'da_mua' && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Đã mua
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-500">{formatDate(signal)}</div>
                       </div>
@@ -406,16 +426,18 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                       )}
                     </div>
 
-                    {/* Buy Button for Mobile */}
-                    <div className="mt-4">
-                      <button
-                        onClick={() => handleBuyClick(signal)}
-                        className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
-                      >
-                        <DollarSign className="h-4 w-4 mr-1.5" />
-                        Nhập thông tin mua
-                      </button>
-                    </div>
+                    {/* Buy Button for Mobile - Only show for signals not bought yet */}
+                    {signal.buy_status !== 'da_mua' && (
+                      <div className="mt-4">
+                        <button
+                          onClick={() => handleBuyClick(signal)}
+                          className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                        >
+                          <DollarSign className="h-4 w-4 mr-1.5" />
+                          Nhập thông tin mua
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -462,8 +484,15 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-bold text-gray-900">
-                            {signal.symbol}
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-bold text-gray-900">
+                              {signal.symbol}
+                            </div>
+                            {signal.buy_status === 'da_mua' && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Đã mua
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -498,13 +527,15 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleBuyClick(signal)}
-                            className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
-                          >
-                            <DollarSign className="h-4 w-4 mr-1.5" />
-                            Mua
-                          </button>
+                          {signal.buy_status !== 'da_mua' && (
+                            <button
+                              onClick={() => handleBuyClick(signal)}
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                            >
+                              <DollarSign className="h-4 w-4 mr-1.5" />
+                              Mua
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
