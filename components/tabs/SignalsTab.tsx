@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Filter, TrendingUp, X, DollarSign, Package, Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar, Filter, TrendingUp, X, DollarSign, Package, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 import { tradingService } from '@/services/tradingService';
 import { TradingSignal, BuyMonitoring } from '@/types/trading';
 import { format } from 'date-fns';
@@ -26,6 +26,8 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get yesterday date string for default filter
   const getYesterdayDateString = () => {
@@ -236,6 +238,33 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
     setSaveMessage(null);
   };
 
+  const handleDeleteClick = (signal: TradingSignal) => {
+    setSelectedSignal(signal);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedSignal || !selectedSignal.id) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await tradingService.deleteSignal(selectedSignal.id);
+      setShowDeleteDialog(false);
+      setSelectedSignal(null);
+    } catch (error) {
+      console.error('Error deleting signal:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setSelectedSignal(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -426,18 +455,25 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                       )}
                     </div>
 
-                    {/* Buy Button for Mobile - Only show for signals not bought yet */}
-                    {signal.buy_status !== 'da_mua' && (
-                      <div className="mt-4">
+                    {/* Action Buttons for Mobile */}
+                    <div className="mt-4 flex gap-2">
+                      {signal.buy_status !== 'da_mua' && (
                         <button
                           onClick={() => handleBuyClick(signal)}
-                          className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                          className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
                         >
                           <DollarSign className="h-4 w-4 mr-1.5" />
-                          Nhập thông tin mua
+                          Mua
                         </button>
-                      </div>
-                    )}
+                      )}
+                      <button
+                        onClick={() => handleDeleteClick(signal)}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors active:scale-95"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1.5" />
+                        Xóa
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -527,15 +563,24 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {signal.buy_status !== 'da_mua' && (
+                          <div className="flex gap-2">
+                            {signal.buy_status !== 'da_mua' && (
+                              <button
+                                onClick={() => handleBuyClick(signal)}
+                                className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                              >
+                                <DollarSign className="h-4 w-4 mr-1.5" />
+                                Mua
+                              </button>
+                            )}
                             <button
-                              onClick={() => handleBuyClick(signal)}
-                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                              onClick={() => handleDeleteClick(signal)}
+                              className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors active:scale-95"
                             >
-                              <DollarSign className="h-4 w-4 mr-1.5" />
-                              Mua
+                              <Trash2 className="h-4 w-4 mr-1.5" />
+                              Xóa
                             </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -863,6 +908,99 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                     </div>
                   ) : (
                     'Lưu thông tin mua'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && selectedSignal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Xác nhận xóa tín hiệu</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedSignal.symbol} • {formatDate(selectedSignal)}
+                </p>
+              </div>
+              <button
+                onClick={handleCloseDeleteDialog}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="p-4">
+              <div className="space-y-4">
+                <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+                      <span className="text-red-600 font-bold">⚠</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-red-800">Cảnh báo: Hành động này không thể hoàn tác</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        Bạn có chắc chắn muốn xóa tín hiệu này? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Signal Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Giá vào</p>
+                    <p className="font-medium">{selectedSignal.entry_price.toLocaleString('vi-VN')}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Độ tin cậy</p>
+                    <p className={`font-medium ${getConfidenceColor(selectedSignal.confidence)} px-2 py-1 rounded-full inline-block`}>
+                      {selectedSignal.confidence < 1 ? (selectedSignal.confidence * 100).toFixed(1) : selectedSignal.confidence.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Reason Preview */}
+                <div>
+                  <p className="text-sm text-gray-500 mb-2">Lý do:</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-gray-700 line-clamp-3">
+                      {selectedSignal.reason || 'Không có lý do cụ thể'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="p-4 border-t">
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCloseDeleteDialog}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors active:scale-95"
+                  disabled={isDeleting}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Đang xóa...
+                    </div>
+                  ) : (
+                    'Xác nhận xóa'
                   )}
                 </button>
               </div>

@@ -337,6 +337,12 @@ export const tradingService = {
         });
     },
 
+    // Delete signal
+    async deleteSignal(signalId: string): Promise<void> {
+        const signalRef = ref(database, `${TRADING_SIGNALS_PATH}/${signalId}`);
+        await set(signalRef, null);
+    },
+
     // Buy monitoring functions
     async saveBuyMonitoring(buyData: Omit<BuyMonitoring, 'id' | 'created_at'>): Promise<string> {
         const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
