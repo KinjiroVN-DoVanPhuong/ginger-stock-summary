@@ -1,10 +1,11 @@
-import { ref, onValue, off, get, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, onValue, off, get, query, orderByChild, equalTo, push, set } from 'firebase/database';
 import { database } from '@/lib/firebase/config';
-import { TradingSignal, TradeResult, MatchedTrade, DashboardMetrics, FilterOptions } from '@/types/trading';
+import { TradingSignal, TradeResult, MatchedTrade, DashboardMetrics, FilterOptions, BuyMonitoring } from '@/types/trading';
 import { differenceInDays, parseISO } from 'date-fns';
 
 const TRADING_SIGNALS_PATH = 'trading_signals';
 const RESULT_MONITORING_PATH = 'result_monitoring';
+const BUY_MONITORING_PATH = 'buy_monitoring';
 
 // Firebase data operations
 export const tradingService = {
@@ -326,5 +327,88 @@ export const tradingService = {
 
             return true;
         });
+    },
+
+    // Buy monitoring functions
+    async saveBuyMonitoring(buyData: Omit<BuyMonitoring, 'id' | 'created_at'>): Promise<string> {
+        const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
+        const newBuyRef = push(buyMonitoringRef);
+        
+        const buyMonitoring: BuyMonitoring = {
+            ...buyData,
+            created_at: Date.now()
+        };
+
+        await set(newBuyRef, buyMonitoring);
+        return newBuyRef.key || '';
+    },
+
+    async getBuyMonitoringBySignalId(signalId: string): Promise<BuyMonitoring[]> {
+        const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
+        const signalQuery = query(buyMonitoringRef, orderByChild('signal_id'), equalTo(signalId));
+        const snapshot = await get(signalQuery);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const buyMonitoring: BuyMonitoring[] = [];
+
+        Object.keys(data).forEach((key) => {
+            buyMonitoring.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        return buyMonitoring;
+    },
+
+    async getBuyMonitoringBySymbol(symbol: string): Promise<BuyMonitoring[]> {
+        const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
+        const symbolQuery = query(buyMonitoringRef, orderByChild('symbol'), equalTo(symbol));
+        const snapshot = await get(symbolQuery);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const buyMonitoring: BuyMonitoring[] = [];
+
+        Object.keys(data).forEach((key) => {
+            buyMonitoring.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        return buyMonitoring;
+    },
+
+    subscribeToBuyMonitoring(callback: (buyMonitoring: BuyMonitoring[]) => void) {
+        const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
+
+        const handleData = (snapshot: any) => {
+            const data = snapshot.val();
+            const buyMonitoring: BuyMonitoring[] = [];
+
+            if (data) {
+                Object.keys(data).forEach((key) => {
+                    buyMonitoring.push({
+                        id: key,
+                        ...data[key]
+                    });
+                });
+            }
+
+            callback(buyMonitoring);
+        };
+
+        onValue(buyMonitoringRef, handleData);
+
+        // Return unsubscribe function
+        return () => off(buyMonitoringRef, 'value', handleData);
     }
 };

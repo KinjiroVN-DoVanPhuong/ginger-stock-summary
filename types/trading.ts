@@ -21,6 +21,20 @@ export interface TradeResult {
     timestamp?: number;
 }
 
+export interface BuyMonitoring {
+    id?: string;
+    signal_id: string;
+    symbol: string;
+    enter_price: number;
+    volume: number;
+    buy_date: string;
+    created_at: number;
+    signal_entry_price: number;
+    signal_stop_loss_price: number;
+    signal_take_profit_price: number;
+    signal_confidence: number;
+}
+
 export interface MatchedTrade {
     symbol: string;
     signal: TradingSignal;
