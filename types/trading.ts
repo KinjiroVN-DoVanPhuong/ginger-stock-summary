@@ -36,6 +36,14 @@ export interface BuyMonitoring {
     signal_confidence: number;
 }
 
+export interface TradingSignalRequest {
+    id?: string;
+    request_date: string;
+    status: 'request' | 'running' | 'done' | 'error';
+    created_at?: number;
+    updated_at?: number;
+}
+
 export interface MatchedTrade {
     symbol: string;
     signal: TradingSignal;

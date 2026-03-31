@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Filter, TrendingUp, X, DollarSign, Package, Calendar as CalendarIcon, Trash2 } from 'lucide-react';
+import { Calendar, Filter, TrendingUp, X, DollarSign, Package, Calendar as CalendarIcon, Trash2, RefreshCw } from 'lucide-react';
 import { tradingService } from '@/services/tradingService';
-import { TradingSignal, BuyMonitoring } from '@/types/trading';
+import { TradingSignal, BuyMonitoring, TradingSignalRequest } from '@/types/trading';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -28,6 +28,9 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [latestRequest, setLatestRequest] = useState<any>(null);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [hasActiveRequest, setHasActiveRequest] = useState(false);
 
   // Get yesterday date string for default filter
   const getYesterdayDateString = () => {
@@ -55,6 +58,23 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
       endDate: getCurrentDateString(),
       symbol: '',
     });
+  }, []);
+
+  // Load latest trading signal request
+  useEffect(() => {
+    const loadLatestRequest = async () => {
+      try {
+        const latestRequest = await tradingService.getLatestTradingSignalRequest();
+        setLatestRequest(latestRequest);
+        
+        const hasActive = await tradingService.hasActiveTradingSignalRequest();
+        setHasActiveRequest(hasActive);
+      } catch (error) {
+        console.error('Error loading trading signal request:', error);
+      }
+    };
+
+    loadLatestRequest();
   }, []);
 
   // Apply filters when they change
@@ -265,6 +285,59 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
     setSelectedSignal(null);
   };
 
+  const handleRequestSignalAnalysis = async () => {
+    try {
+      setIsRequesting(true);
+      
+      // Delete old records (older than 7 days)
+      await tradingService.deleteOldTradingSignalRequests(7);
+      
+      // Create new request
+      await tradingService.createTradingSignalRequest();
+      
+      // Reload latest request
+      const latestRequest = await tradingService.getLatestTradingSignalRequest();
+      setLatestRequest(latestRequest);
+      
+      const hasActive = await tradingService.hasActiveTradingSignalRequest();
+      setHasActiveRequest(hasActive);
+    } catch (error) {
+      console.error('Error requesting signal analysis:', error);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'request':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'running':
+        return 'bg-blue-100 text-blue-800';
+      case 'done':
+        return 'bg-green-100 text-green-800';
+      case 'error':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'request':
+        return 'Đang chờ xử lý';
+      case 'running':
+        return 'Đang phân tích';
+      case 'done':
+        return 'Hoàn thành';
+      case 'error':
+        return 'Lỗi';
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -275,6 +348,64 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
         </div>
         <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
           Hiển thị <span className="font-bold">{filteredSignals.length}</span> tín hiệu
+        </div>
+      </div>
+
+      {/* Signal Analysis Request Section */}
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Yêu cầu phân tích tín hiệu</h3>
+            <p className="text-sm text-gray-600">
+              Tạo yêu cầu phân tích để hệ thống AI tạo tín hiệu giao dịch mới
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-end gap-2">
+            {/* Show status if there's an active request */}
+            {hasActiveRequest && latestRequest && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Trạng thái:</span>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(latestRequest.status)}`}>
+                  {getStatusText(latestRequest.status)}
+                </span>
+                {latestRequest.request_date && (
+                  <span className="text-sm text-gray-500">
+                    ({format(new Date(latestRequest.request_date), 'dd/MM/yyyy', { locale: vi })})
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Show request button only if no active request */}
+            {!hasActiveRequest && (
+              <button
+                onClick={handleRequestSignalAnalysis}
+                disabled={isRequesting}
+                className="inline-flex items-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRequesting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Đang xử lý...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4" />
+                    Yêu cầu phân tích tín hiệu
+                  </div>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* Info message */}
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">Lưu ý:</span> Khi nhấn yêu cầu, hệ thống sẽ tự động xóa các yêu cầu cũ hơn 7 ngày và tạo yêu cầu mới.
+            Nếu có yêu cầu đang chờ xử lý hoặc đang chạy, nút yêu cầu sẽ bị ẩn.
+          </p>
         </div>
       </div>
 

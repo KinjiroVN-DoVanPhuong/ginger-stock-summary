@@ -6,6 +6,7 @@ import { differenceInDays, parseISO } from 'date-fns';
 const TRADING_SIGNALS_PATH = 'trading_signals';
 const RESULT_MONITORING_PATH = 'result_monitoring';
 const BUY_MONITORING_PATH = 'buy_monitoring';
+const TRADING_SIGNAL_REQUEST_PATH = 'trading_signal_request';
 
 // Firebase data operations
 export const tradingService = {
@@ -430,5 +431,79 @@ export const tradingService = {
 
         // Return unsubscribe function
         return () => off(buyMonitoringRef, 'value', handleData);
+    },
+
+    // Trading Signal Request functions
+    async createTradingSignalRequest(): Promise<string> {
+        const requestsRef = ref(database, TRADING_SIGNAL_REQUEST_PATH);
+        const newRequestRef = push(requestsRef);
+        
+        const request = {
+            request_date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+            status: 'request',
+            created_at: Date.now()
+        };
+
+        await set(newRequestRef, request);
+        return newRequestRef.key || '';
+    },
+
+    async getTradingSignalRequests(): Promise<any[]> {
+        const requestsRef = ref(database, TRADING_SIGNAL_REQUEST_PATH);
+        const snapshot = await get(requestsRef);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const requests: any[] = [];
+
+        Object.keys(data).forEach((key) => {
+            requests.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        // Sort by created_at (newest first)
+        requests.sort((a, b) => b.created_at - a.created_at);
+        return requests;
+    },
+
+    async getLatestTradingSignalRequest(): Promise<any | null> {
+        const requests = await this.getTradingSignalRequests();
+        return requests.length > 0 ? requests[0] : null;
+    },
+
+    async hasActiveTradingSignalRequest(): Promise<boolean> {
+        const requests = await this.getTradingSignalRequests();
+        return requests.some(request => request.status === 'request' || request.status === 'running');
+    },
+
+    async deleteOldTradingSignalRequests(daysOld: number = 7): Promise<void> {
+        const requests = await this.getTradingSignalRequests();
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+        
+        const deletePromises = requests
+            .filter(request => {
+                const requestDate = new Date(request.request_date);
+                return requestDate <= cutoffDate;
+            })
+            .map(request => {
+                const requestRef = ref(database, `${TRADING_SIGNAL_REQUEST_PATH}/${request.id}`);
+                return set(requestRef, null);
+            });
+
+        await Promise.all(deletePromises);
+    },
+
+    async updateTradingSignalRequestStatus(requestId: string, status: 'request' | 'running' | 'done' | 'error'): Promise<void> {
+        const requestRef = ref(database, `${TRADING_SIGNAL_REQUEST_PATH}/${requestId}`);
+        await update(requestRef, {
+            status,
+            updated_at: Date.now()
+        });
     }
 };
