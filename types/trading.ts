@@ -36,6 +36,16 @@ export interface BuyMonitoring {
     signal_confidence: number;
 }
 
+export interface SellMonitoring {
+    id?: string;
+    buy_monitoring_id: string;
+    symbol: string;
+    sell_price: number;
+    volume: number;
+    sell_date: string;
+    created_at: number;
+}
+
 export interface TradingSignalRequest {
     id?: string;
     request_date: string;

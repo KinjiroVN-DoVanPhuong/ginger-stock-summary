@@ -1,11 +1,12 @@
 import { ref, onValue, off, get, query, orderByChild, equalTo, push, set, update } from 'firebase/database';
 import { database } from '@/lib/firebase/config';
-import { TradingSignal, TradeResult, MatchedTrade, DashboardMetrics, FilterOptions, BuyMonitoring } from '@/types/trading';
+import { TradingSignal, TradeResult, MatchedTrade, DashboardMetrics, FilterOptions, BuyMonitoring, SellMonitoring } from '@/types/trading';
 import { differenceInDays, parseISO } from 'date-fns';
 
 const TRADING_SIGNALS_PATH = 'trading_signals';
 const RESULT_MONITORING_PATH = 'result_monitoring';
 const BUY_MONITORING_PATH = 'buy_monitoring';
+const SELL_MONITORING_PATH = 'sell_monitoring';
 const TRADING_SIGNAL_REQUEST_PATH = 'trading_signal_request';
 
 // Firebase data operations
@@ -505,5 +506,217 @@ export const tradingService = {
             status,
             updated_at: Date.now()
         });
+    },
+
+    // Sell monitoring functions
+    async saveSellMonitoring(sellData: Omit<SellMonitoring, 'id' | 'created_at'>): Promise<string> {
+        const sellMonitoringRef = ref(database, SELL_MONITORING_PATH);
+        const newSellRef = push(sellMonitoringRef);
+        
+        const sellMonitoring: SellMonitoring = {
+            ...sellData,
+            created_at: Date.now()
+        };
+
+        await set(newSellRef, sellMonitoring);
+        return newSellRef.key || '';
+    },
+
+    async getSellMonitoringByBuyId(buyMonitoringId: string): Promise<SellMonitoring[]> {
+        const sellMonitoringRef = ref(database, SELL_MONITORING_PATH);
+        const buyIdQuery = query(sellMonitoringRef, orderByChild('buy_monitoring_id'), equalTo(buyMonitoringId));
+        const snapshot = await get(buyIdQuery);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const sellMonitoring: SellMonitoring[] = [];
+
+        Object.keys(data).forEach((key) => {
+            sellMonitoring.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        return sellMonitoring;
+    },
+
+    async getSellMonitoringBySymbol(symbol: string): Promise<SellMonitoring[]> {
+        const sellMonitoringRef = ref(database, SELL_MONITORING_PATH);
+        const symbolQuery = query(sellMonitoringRef, orderByChild('symbol'), equalTo(symbol));
+        const snapshot = await get(symbolQuery);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const sellMonitoring: SellMonitoring[] = [];
+
+        Object.keys(data).forEach((key) => {
+            sellMonitoring.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        return sellMonitoring;
+    },
+
+    subscribeToSellMonitoring(callback: (sellMonitoring: SellMonitoring[]) => void) {
+        const sellMonitoringRef = ref(database, SELL_MONITORING_PATH);
+
+        const handleData = (snapshot: any) => {
+            const data = snapshot.val();
+            const sellMonitoring: SellMonitoring[] = [];
+
+            if (data) {
+                Object.keys(data).forEach((key) => {
+                    sellMonitoring.push({
+                        id: key,
+                        ...data[key]
+                    });
+                });
+            }
+
+            callback(sellMonitoring);
+        };
+
+        onValue(sellMonitoringRef, handleData);
+
+        // Return unsubscribe function
+        return () => off(sellMonitoringRef, 'value', handleData);
+    },
+
+    // Asset calculation functions
+    async getStockHoldings(): Promise<Array<{
+        symbol: string;
+        total_bought_volume: number;
+        total_sold_volume: number;
+        average_buy_price: number;
+        current_holding_volume: number;
+        total_investment: number;
+        current_value: number;
+        profit_loss_percentage: number;
+        profit_loss_amount: number;
+    }>> {
+        const [buyMonitoring, sellMonitoring] = await Promise.all([
+            this.getBuyMonitoring(),
+            this.getSellMonitoring()
+        ]);
+
+        // Group by symbol
+        const holdingsBySymbol: Record<string, {
+            symbol: string;
+            buyTransactions: BuyMonitoring[];
+            sellTransactions: SellMonitoring[];
+        }> = {};
+
+        // Process buy transactions
+        buyMonitoring.forEach(buy => {
+            if (!holdingsBySymbol[buy.symbol]) {
+                holdingsBySymbol[buy.symbol] = {
+                    symbol: buy.symbol,
+                    buyTransactions: [],
+                    sellTransactions: []
+                };
+            }
+            holdingsBySymbol[buy.symbol].buyTransactions.push(buy);
+        });
+
+        // Process sell transactions
+        sellMonitoring.forEach(sell => {
+            if (!holdingsBySymbol[sell.symbol]) {
+                holdingsBySymbol[sell.symbol] = {
+                    symbol: sell.symbol,
+                    buyTransactions: [],
+                    sellTransactions: []
+                };
+            }
+            holdingsBySymbol[sell.symbol].sellTransactions.push(sell);
+        });
+
+        // Calculate holdings for each symbol
+        const holdings = Object.values(holdingsBySymbol).map(holding => {
+            const totalBoughtVolume = holding.buyTransactions.reduce((sum, buy) => sum + buy.volume, 0);
+            const totalSoldVolume = holding.sellTransactions.reduce((sum, sell) => sum + sell.volume, 0);
+            const currentHoldingVolume = totalBoughtVolume - totalSoldVolume;
+
+            // Calculate average buy price (weighted by volume)
+            const totalBuyValue = holding.buyTransactions.reduce((sum, buy) => sum + (buy.enter_price * buy.volume), 0);
+            const averageBuyPrice = totalBoughtVolume > 0 ? totalBuyValue / totalBoughtVolume : 0;
+
+            // Calculate total investment (based on bought volume)
+            const totalInvestment = totalBuyValue;
+
+            // Calculate current value (using average buy price for simplicity - in real app, would use current market price)
+            const currentValue = currentHoldingVolume * averageBuyPrice;
+
+            // Calculate profit/loss
+            const totalSellValue = holding.sellTransactions.reduce((sum, sell) => sum + (sell.sell_price * sell.volume), 0);
+            const profitLossAmount = totalSellValue - (averageBuyPrice * totalSoldVolume);
+            const profitLossPercentage = (averageBuyPrice * totalSoldVolume) > 0 
+                ? (profitLossAmount / (averageBuyPrice * totalSoldVolume)) * 100 
+                : 0;
+
+            return {
+                symbol: holding.symbol,
+                total_bought_volume: totalBoughtVolume,
+                total_sold_volume: totalSoldVolume,
+                average_buy_price: averageBuyPrice,
+                current_holding_volume: currentHoldingVolume,
+                total_investment: totalInvestment,
+                current_value: currentValue,
+                profit_loss_percentage: profitLossPercentage,
+                profit_loss_amount: profitLossAmount
+            };
+        });
+
+        return holdings;
+    },
+
+    async getBuyMonitoring(): Promise<BuyMonitoring[]> {
+        const buyMonitoringRef = ref(database, BUY_MONITORING_PATH);
+        const snapshot = await get(buyMonitoringRef);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const buyMonitoring: BuyMonitoring[] = [];
+
+        Object.keys(data).forEach((key) => {
+            buyMonitoring.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        return buyMonitoring;
+    },
+
+    async getSellMonitoring(): Promise<SellMonitoring[]> {
+        const sellMonitoringRef = ref(database, SELL_MONITORING_PATH);
+        const snapshot = await get(sellMonitoringRef);
+
+        if (!snapshot.exists()) {
+            return [];
+        }
+
+        const data = snapshot.val();
+        const sellMonitoring: SellMonitoring[] = [];
+
+        Object.keys(data).forEach((key) => {
+            sellMonitoring.push({
+                id: key,
+                ...data[key]
+            });
+        });
+
+        return sellMonitoring;
     }
 };
