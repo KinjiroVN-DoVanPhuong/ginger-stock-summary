@@ -14,7 +14,7 @@ import OrderBookTab from '@/components/tabs/OrderBookTab';
 type TabType = 'signals' | 'analysis' | 'assets' | 'orderbook';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>('signals');
+  const [activeTab, setActiveTab] = useState<TabType>('orderbook');
   const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
   const [tradeResults, setTradeResults] = useState<TradeResult[]>([]);
   const [matchedTrades, setMatchedTrades] = useState<MatchedTrade[]>([]);
