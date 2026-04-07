@@ -34,6 +34,10 @@ export interface BuyMonitoring {
     signal_stop_loss_price: number;
     signal_take_profit_price: number;
     signal_confidence: number;
+    current_price?: number;
+    status?: 'HOLDING' | 'STOP_LOSS' | 'TAKE_PROFIT';
+    updated_at?: string;
+    firebase_updated_at?: string;
 }
 
 export interface SellMonitoring {
