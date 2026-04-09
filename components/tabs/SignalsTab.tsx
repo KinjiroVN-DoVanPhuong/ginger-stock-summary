@@ -110,7 +110,7 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
       });
     }
 
-    // Sort signals: chua_mua first, then da_mua, then by date (newest first)
+    // Sort signals: chua_mua first, then da_mua, then by date (newest to oldest) and final_score (high to low)
     filtered.sort((a, b) => {
       // First sort by buy status: chua_mua comes before da_mua
       const statusA = a.buy_status || 'chua_mua';
@@ -119,10 +119,17 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
       if (statusA === 'chua_mua' && statusB === 'da_mua') return -1;
       if (statusA === 'da_mua' && statusB === 'chua_mua') return 1;
       
-      // Then sort by date (newest first)
+      // Then sort by date (newest to oldest)
       const dateA = a.date ? new Date(a.date).getTime() : (a.timestamp || 0);
       const dateB = b.date ? new Date(b.date).getTime() : (b.timestamp || 0);
-      return dateB - dateA;
+      if (dateB !== dateA) {
+        return dateB - dateA; // Newest first
+      }
+      
+      // If dates are equal, sort by final_score (high to low)
+      const scoreA = a.final_score || 0;
+      const scoreB = b.final_score || 0;
+      return scoreB - scoreA; // Highest score first
     });
 
     setFilteredSignals(filtered);
@@ -531,6 +538,11 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
                             {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
                           </span>
+                          {signal.pred_prob !== undefined && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              ML: {(signal.pred_prob * 100).toFixed(1)}%
+                            </span>
+                          )}
                           {signal.buy_status === 'da_mua' && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                               Đã mua
@@ -632,7 +644,7 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                         Cắt Lỗ
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Độ Tin Cậy
+                        Độ Tin Cậy / ML
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Lý Do
@@ -684,9 +696,16 @@ export default function SignalsTab({ tradingSignals }: SignalsTabProps) {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
-                            {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getConfidenceColor(signal.confidence)}`}>
+                              {signal.confidence < 1 ? (signal.confidence * 100).toFixed(1) : signal.confidence.toFixed(1)}%
+                            </span>
+                            {signal.pred_prob !== undefined && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                ML: {(signal.pred_prob * 100).toFixed(1)}%
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-700 max-w-xs">

@@ -5,6 +5,8 @@ export interface TradingSignal {
     stop_loss_price: number;
     take_profit_price: number;
     confidence: number;
+    final_score?: number;
+    pred_prob?: number;
     reason?: string;
     date?: string;
     timestamp?: number;
