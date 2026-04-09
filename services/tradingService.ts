@@ -718,5 +718,65 @@ export const tradingService = {
         });
 
         return sellMonitoring;
+    },
+
+    // Delete buy monitoring by symbol
+    async deleteBuyMonitoringBySymbol(symbol: string): Promise<void> {
+        const buyMonitoring = await this.getBuyMonitoringBySymbol(symbol);
+        
+        const deletePromises = buyMonitoring.map(buy => {
+            const buyRef = ref(database, `${BUY_MONITORING_PATH}/${buy.id}`);
+            return set(buyRef, null);
+        });
+
+        await Promise.all(deletePromises);
+    },
+
+    // Check and delete buy orders when total sell volume equals total buy volume for a symbol
+    async checkAndDeleteFullySoldBuyOrders(): Promise<void> {
+        const [buyMonitoring, sellMonitoring] = await Promise.all([
+            this.getBuyMonitoring(),
+            this.getSellMonitoring()
+        ]);
+
+        // Group buy orders by symbol
+        const buyBySymbol: Record<string, BuyMonitoring[]> = {};
+        buyMonitoring.forEach(buy => {
+            if (!buyBySymbol[buy.symbol]) {
+                buyBySymbol[buy.symbol] = [];
+            }
+            buyBySymbol[buy.symbol].push(buy);
+        });
+
+        // Group sell orders by symbol
+        const sellBySymbol: Record<string, SellMonitoring[]> = {};
+        sellMonitoring.forEach(sell => {
+            if (!sellBySymbol[sell.symbol]) {
+                sellBySymbol[sell.symbol] = [];
+            }
+            sellBySymbol[sell.symbol].push(sell);
+        });
+
+        // Check each symbol
+        const symbolsToDelete: string[] = [];
+
+        for (const symbol in buyBySymbol) {
+            const totalBuyVolume = buyBySymbol[symbol].reduce((sum, buy) => sum + buy.volume, 0);
+            const totalSellVolume = sellBySymbol[symbol] 
+                ? sellBySymbol[symbol].reduce((sum, sell) => sum + sell.volume, 0)
+                : 0;
+
+            // If total sell volume equals total buy volume, mark for deletion
+            if (totalBuyVolume > 0 && totalSellVolume === totalBuyVolume) {
+                symbolsToDelete.push(symbol);
+            }
+        }
+
+        // Delete buy orders for symbols that are fully sold
+        const deletePromises = symbolsToDelete.map(symbol => 
+            this.deleteBuyMonitoringBySymbol(symbol)
+        );
+
+        await Promise.all(deletePromises);
     }
 };
