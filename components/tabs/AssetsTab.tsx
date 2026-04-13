@@ -6,13 +6,17 @@ import { BuyMonitoring, SellMonitoring } from '@/types/trading';
 import { DollarSign, ShoppingBag, PieChart, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface AssetSummary {
-  totalSoldValue: number;      // Tổng giá trị đã bán
-  totalBoughtValue: number;    // Tổng giá trị đã mua
-  totalAssets: number;         // Tổng tài sản
+  totalSoldValue: number;      // Tổng giá trị đã bán (trước phí)
+  totalBoughtValue: number;    // Tổng giá trị đã mua (trước phí)
+  totalAssets: number;         // Tổng tài sản (sau phí)
   currentStockValue: number;   // Giá trị cổ phiếu đang nắm giữ
   totalHoldingVolume: number;  // Tổng khối lượng đang nắm giữ
   profitAmount: number;        // Lợi nhuận = tổng tài sản - tổng giá trị đã mua
   profitPercentage: number;    // Phần trăm lợi nhuận = (lợi nhuận / tổng giá trị đã mua) * 100
+  totalFees: number;           // Tổng phí giao dịch
+  buyFees: number;             // Phí mua (0.25%)
+  sellFees: number;            // Phí bán (0.35%)
+  cashAfterFees: number;       // Tiền mặt sau khi trừ phí
 }
 
 export default function AssetsTab() {
@@ -126,13 +130,34 @@ export default function AssetsTab() {
       }
     });
 
-    // 4. Tổng tài sản = Tổng giá trị đã bán + Giá trị cổ phiếu đang nắm giữ
-    const totalAssets = totalSoldValue + currentStockValue;
+    // 4. Tính phí giao dịch
+    // Phí mua = 0.25% trên giá trị của giao dịch mua
+    const buyFees = buyData.reduce((sum, buy) => {
+      const buyValue = buy.enter_price * buy.volume;
+      return sum + (buyValue * 0.0025); // 0.25% = 0.0025
+    }, 0);
 
-    // 5. Tính lợi nhuận = Tổng tài sản - Tổng giá trị đã mua
+    // Phí bán = 0.35% trên giá trị của giao dịch bán
+    const sellFees = sellData.reduce((sum, sell) => {
+      const sellValue = sell.sell_price * sell.volume;
+      return sum + (sellValue * 0.0035); // 0.35% = 0.0035
+    }, 0);
+
+    const totalFees = buyFees + sellFees;
+
+    // 5. Tính tiền mặt sau khi trừ phí
+    // Tiền mặt = Tổng giá trị đã bán - Phí bán
+    const cashAfterFees = totalSoldValue - sellFees;
+
+    // 6. Tổng tài sản = Tiền mặt sau phí + Giá trị cổ phiếu đang nắm giữ - Tổng phí
+    // Theo yêu cầu: Tổng tài sản = Tổng tiền mặt + giá trị cổ phiếu đang nắm giữ - phí
+    // Phí ở đây là tổng phí (buyFees + sellFees)
+    const totalAssets = cashAfterFees + currentStockValue - totalFees;
+
+    // 7. Tính lợi nhuận = Tổng tài sản - Tổng giá trị đã mua
     const profitAmount = totalAssets - totalBoughtValue;
     
-    // 6. Tính phần trăm lợi nhuận = (Lợi nhuận / Tổng giá trị đã mua) * 100
+    // 8. Tính phần trăm lợi nhuận = (Lợi nhuận / Tổng giá trị đã mua) * 100
     const profitPercentage = totalBoughtValue > 0 ? (profitAmount / totalBoughtValue) * 100 : 0;
 
     setAssetSummary({
@@ -142,7 +167,11 @@ export default function AssetsTab() {
       currentStockValue,
       totalHoldingVolume,
       profitAmount,
-      profitPercentage
+      profitPercentage,
+      totalFees,
+      buyFees,
+      sellFees,
+      cashAfterFees
     });
   };
 
