@@ -90,50 +90,33 @@ export default function TradingTab() {
       buyBySymbol[buy.symbol].push(buy);
     });
 
-    // Group sell orders by symbol
-    const sellBySymbol: Record<string, SellMonitoring[]> = {};
-    sellMonitoring.forEach(sell => {
-      if (!sellBySymbol[sell.symbol]) {
-        sellBySymbol[sell.symbol] = [];
-      }
-      sellBySymbol[sell.symbol].push(sell);
-    });
-
     let totalInvestment = 0;
     let currentValue = 0;
     let totalProfitLoss = 0;
     const symbolProfits: Record<string, number> = {};
 
-    // Calculate for each symbol
+    // Calculate for each symbol based ONLY on buy list with current price
     Object.keys(buyBySymbol).forEach(symbol => {
       const symbolBuys = buyBySymbol[symbol];
-      const symbolSells = sellBySymbol[symbol] || [];
 
       // Calculate total bought volume and value
       const totalBoughtVolume = symbolBuys.reduce((sum, buy) => sum + buy.volume, 0);
       const totalBoughtValue = symbolBuys.reduce((sum, buy) => sum + (buy.enter_price * buy.volume), 0);
 
-      // Calculate total sold volume and value
-      const totalSoldVolume = symbolSells.reduce((sum, sell) => sum + sell.volume, 0);
-      const totalSoldValue = symbolSells.reduce((sum, sell) => sum + (sell.sell_price * sell.volume), 0);
+      // Calculate current value based on current price (use enter_price if current_price not available)
+      const currentValueForSymbol = symbolBuys.reduce((sum, buy) => {
+        const currentPrice = buy.current_price || buy.enter_price;
+        return sum + (currentPrice * buy.volume);
+      }, 0);
 
-      // Calculate current holding volume
-      const currentHoldingVolume = totalBoughtVolume - totalSoldVolume;
-
-      // Calculate average buy price
-      const averageBuyPrice = totalBoughtVolume > 0 ? totalBoughtValue / totalBoughtVolume : 0;
-
-      // Calculate profit/loss for sold shares
-      const soldProfitLoss = totalSoldValue - (averageBuyPrice * totalSoldVolume);
-      
-      // Calculate current value of holdings (using average buy price as current price for simplicity)
-      const currentHoldingValue = currentHoldingVolume * averageBuyPrice;
+      // Calculate profit/loss for this symbol (unrealized)
+      const symbolProfitLoss = currentValueForSymbol - totalBoughtValue;
 
       totalInvestment += totalBoughtValue;
-      currentValue += currentHoldingValue + totalSoldValue;
-      totalProfitLoss += soldProfitLoss;
+      currentValue += currentValueForSymbol;
+      totalProfitLoss += symbolProfitLoss;
 
-      symbolProfits[symbol] = soldProfitLoss;
+      symbolProfits[symbol] = symbolProfitLoss;
     });
 
     // Find most profitable and most loss symbols
