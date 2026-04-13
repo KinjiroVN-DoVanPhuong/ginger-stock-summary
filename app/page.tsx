@@ -14,7 +14,7 @@ import AssetsTab from '@/components/tabs/AssetsTab';
 type TabType = 'signals' | 'analysis' | 'trading' | 'assets';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>('signals');
+  const [activeTab, setActiveTab] = useState<TabType>('trading');
   const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
   const [tradeResults, setTradeResults] = useState<TradeResult[]>([]);
   const [matchedTrades, setMatchedTrades] = useState<MatchedTrade[]>([]);
