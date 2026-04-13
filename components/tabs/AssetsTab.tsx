@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { tradingService } from '@/services/tradingService';
 import { BuyMonitoring, SellMonitoring } from '@/types/trading';
-import { DollarSign, ShoppingBag, PieChart } from 'lucide-react';
+import { DollarSign, ShoppingBag, PieChart, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface AssetSummary {
   totalSoldValue: number;      // Tổng giá trị đã bán
@@ -11,6 +11,8 @@ interface AssetSummary {
   totalAssets: number;         // Tổng tài sản
   currentStockValue: number;   // Giá trị cổ phiếu đang nắm giữ
   totalHoldingVolume: number;  // Tổng khối lượng đang nắm giữ
+  profitAmount: number;        // Lợi nhuận = tổng tài sản - tổng giá trị đã mua
+  profitPercentage: number;    // Phần trăm lợi nhuận = (lợi nhuận / tổng giá trị đã mua) * 100
 }
 
 export default function AssetsTab() {
@@ -127,12 +129,20 @@ export default function AssetsTab() {
     // 4. Tổng tài sản = Tổng giá trị đã bán + Giá trị cổ phiếu đang nắm giữ
     const totalAssets = totalSoldValue + currentStockValue;
 
+    // 5. Tính lợi nhuận = Tổng tài sản - Tổng giá trị đã mua
+    const profitAmount = totalAssets - totalBoughtValue;
+    
+    // 6. Tính phần trăm lợi nhuận = (Lợi nhuận / Tổng giá trị đã mua) * 100
+    const profitPercentage = totalBoughtValue > 0 ? (profitAmount / totalBoughtValue) * 100 : 0;
+
     setAssetSummary({
       totalSoldValue,
       totalBoughtValue,
       totalAssets,
       currentStockValue,
-      totalHoldingVolume
+      totalHoldingVolume,
+      profitAmount,
+      profitPercentage
     });
   };
 
@@ -163,7 +173,36 @@ export default function AssetsTab() {
 
       {/* Asset Summary Cards */}
       {assetSummary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Profit Card */}
+          <div className={`p-4 sm:p-6 rounded-lg border ${
+            assetSummary.profitAmount >= 0 
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-100' 
+              : 'bg-gradient-to-r from-red-50 to-rose-50 border-red-100'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium">Lợi Nhuận</p>
+                <p className={`text-xl sm:text-2xl font-bold ${
+                  assetSummary.profitAmount >= 0 ? 'text-green-700' : 'text-red-700'
+                }`}>
+                  {formatCurrency(assetSummary.profitAmount)}
+                </p>
+                <p className={`text-sm ${
+                  assetSummary.profitPercentage >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {assetSummary.profitPercentage >= 0 ? '+' : ''}{assetSummary.profitPercentage.toFixed(2)}%
+                </p>
+              </div>
+              {assetSummary.profitAmount >= 0 ? (
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+              ) : (
+                <TrendingDown className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" />
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Tổng tài sản - Tổng giá trị đã mua</p>
+          </div>
+
           {/* Total Sold Value */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 rounded-lg border border-green-100">
             <div className="flex items-center justify-between">
@@ -213,59 +252,6 @@ export default function AssetsTab() {
               <PieChart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500" />
             </div>
             <p className="text-xs text-gray-500 mt-2">Tổng tiền mặt + giá trị cổ phiếu đang nắm giữ</p>
-          </div>
-        </div>
-      )}
-
-      {/* Additional Information */}
-      {assetSummary && (
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Chi Tiết Tài Sản</h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Current Stock Holdings */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-700">Cổ Phiếu Đang Nắm Giữ</p>
-                <span className="text-sm font-bold text-gray-900">
-                  {formatCurrency(assetSummary.currentStockValue)}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500">
-                Tổng khối lượng: {assetSummary.totalHoldingVolume.toLocaleString('vi-VN')} CP
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Tính theo giá hiện tại từ danh sách mua
-              </p>
-            </div>
-
-            {/* Investment Summary */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-700">Tổng Đầu Tư</p>
-                <span className="text-sm font-bold text-gray-900">
-                  {formatCurrency(assetSummary.totalBoughtValue)}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500">
-                Đã thu hồi: {formatCurrency(assetSummary.totalSoldValue)}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Còn lại: {formatCurrency(assetSummary.totalBoughtValue - assetSummary.totalSoldValue)}
-              </p>
-            </div>
-          </div>
-
-          {/* Calculation Notes */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Ghi chú tính toán:</h4>
-            <ul className="text-xs text-gray-600 space-y-1">
-              <li>• <span className="font-medium">Tổng giá trị đã bán</span>: Tính từ bảng SellMonitoring (giá bán × khối lượng)</li>
-              <li>• <span className="font-medium">Tổng giá trị đã mua</span>: Tính từ bảng BuyMonitoring (giá mua × khối lượng)</li>
-              <li>• <span className="font-medium">Khối lượng đang nắm giữ</span>: Tổng khối lượng đã mua - Tổng khối lượng đã bán</li>
-              <li>• <span className="font-medium">Giá trị cổ phiếu đang nắm giữ</span>: Khối lượng đang nắm giữ × Giá hiện tại (từ BuyMonitoring)</li>
-              <li>• <span className="font-medium">Tổng tài sản</span>: Tổng giá trị đã bán + Giá trị cổ phiếu đang nắm giữ</li>
-            </ul>
           </div>
         </div>
       )}
