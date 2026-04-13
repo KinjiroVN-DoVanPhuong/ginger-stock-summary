@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { tradingService } from '@/services/tradingService';
 import { BuyMonitoring, SellMonitoring } from '@/types/trading';
-import { DollarSign, ShoppingBag, PieChart, TrendingUp, TrendingDown } from 'lucide-react';
+import { DollarSign, ShoppingBag, PieChart, TrendingUp, TrendingDown, CreditCard } from 'lucide-react';
 
 interface AssetSummary {
   totalSoldValue: number;      // Tổng giá trị đã bán (trước phí)
@@ -281,6 +281,70 @@ export default function AssetsTab() {
               <PieChart className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500" />
             </div>
             <p className="text-xs text-gray-500 mt-2">Tổng tiền mặt + giá trị cổ phiếu đang nắm giữ</p>
+          </div>
+        </div>
+      )}
+
+      {/* Fees Information */}
+      {assetSummary && (
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Chi Phí Giao Dịch</h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Total Fees */}
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-orange-600 font-medium">Tổng Phí</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                    {formatCurrency(assetSummary.totalFees)}
+                  </p>
+                </div>
+                <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Tổng chi phí giao dịch đã trừ</p>
+            </div>
+
+            {/* Buy Fees */}
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-blue-600 font-medium">Phí Mua</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                    {formatCurrency(assetSummary.buyFees)}
+                  </p>
+                  <p className="text-sm text-blue-600">0.25%</p>
+                </div>
+                <ShoppingBag className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500" />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Phí mua trên tổng giá trị đã mua</p>
+            </div>
+
+            {/* Sell Fees */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs sm:text-sm text-green-600 font-medium">Phí Bán</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                    {formatCurrency(assetSummary.sellFees)}
+                  </p>
+                  <p className="text-sm text-green-600">0.35%</p>
+                </div>
+                <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-500" />
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Phí bán trên tổng giá trị đã bán</p>
+            </div>
+          </div>
+
+          {/* Calculation Notes */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Ghi chú tính toán phí:</h4>
+            <ul className="text-xs text-gray-600 space-y-1">
+              <li>• <span className="font-medium">Phí mua</span>: 0.25% trên giá trị của mỗi giao dịch mua</li>
+              <li>• <span className="font-medium">Phí bán</span>: 0.35% trên giá trị của mỗi giao dịch bán</li>
+              <li>• <span className="font-medium">Tổng tài sản</span>: (Tổng giá trị đã bán - Phí bán) + Giá trị cổ phiếu đang nắm giữ - (Phí mua + Phí bán)</li>
+              <li>• <span className="font-medium">Tiền mặt sau phí</span>: Tổng giá trị đã bán - Phí bán</li>
+            </ul>
           </div>
         </div>
       )}
