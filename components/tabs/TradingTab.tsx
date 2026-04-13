@@ -29,6 +29,17 @@ export default function TradingTab() {
     status: 'ALL' as 'ALL' | 'HOLDING' | 'STOP_LOSS' | 'TAKE_PROFIT',
   });
 
+  // State for sell dialog
+  const [showSellDialog, setShowSellDialog] = useState(false);
+  const [selectedBuy, setSelectedBuy] = useState<BuyMonitoring | null>(null);
+  const [sellForm, setSellForm] = useState({
+    sell_price: '',
+    volume: '',
+    sell_date: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -230,6 +241,105 @@ export default function TradingTab() {
       default:
         return 'Chưa xác định';
     }
+  };
+
+  // Sell dialog handlers
+  const handleSellClick = (buy: BuyMonitoring) => {
+    setSelectedBuy(buy);
+    setSellForm({
+      sell_price: (buy.current_price || buy.enter_price).toString(),
+      volume: Math.min(100, buy.volume).toString(),
+      sell_date: format(new Date(), 'yyyy-MM-dd')
+    });
+    setShowSellDialog(true);
+    setSaveMessage(null);
+  };
+
+  const handleSellFormChange = (key: keyof typeof sellForm, value: string) => {
+    setSellForm(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSaveSell = async () => {
+    if (!selectedBuy) {
+      setSaveMessage({ type: 'error', text: 'Không tìm thấy thông tin lệnh mua' });
+      return;
+    }
+
+    // Validate form
+    if (!sellForm.sell_price || !sellForm.volume || !sellForm.sell_date) {
+      setSaveMessage({ type: 'error', text: 'Vui lòng điền đầy đủ thông tin' });
+      return;
+    }
+
+    const sellPrice = parseFloat(sellForm.sell_price);
+    const volume = parseInt(sellForm.volume);
+
+    if (isNaN(sellPrice) || sellPrice <= 0) {
+      setSaveMessage({ type: 'error', text: 'Giá bán phải là số dương' });
+      return;
+    }
+
+    if (isNaN(volume) || volume <= 0) {
+      setSaveMessage({ type: 'error', text: 'Khối lượng phải là số dương' });
+      return;
+    }
+
+    if (volume > selectedBuy.volume) {
+      setSaveMessage({ 
+        type: 'error', 
+        text: `Khối lượng bán không được vượt quá ${selectedBuy.volume.toLocaleString('vi-VN')} (khối lượng mua)` 
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setSaveMessage(null);
+
+      const sellData = {
+        buy_monitoring_id: selectedBuy.id || '',
+        symbol: selectedBuy.symbol,
+        sell_price: sellPrice,
+        volume: volume,
+        sell_date: sellForm.sell_date
+      };
+
+      await tradingService.saveSellMonitoring(sellData);
+      
+      setSaveMessage({ 
+        type: 'success', 
+        text: 'Đã lưu thông tin bán thành công!' 
+      });
+      
+      // Reset form after successful save
+      setTimeout(() => {
+        setShowSellDialog(false);
+        setSaveMessage(null);
+        setSelectedBuy(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Error saving sell monitoring:', error);
+      setSaveMessage({ 
+        type: 'error', 
+        text: 'Lỗi khi lưu thông tin bán. Vui lòng thử lại.' 
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCloseSellDialog = () => {
+    setShowSellDialog(false);
+    setSelectedBuy(null);
+    setSellForm({
+      sell_price: '',
+      volume: '',
+      sell_date: ''
+    });
+    setSaveMessage(null);
   };
 
   if (loading) {
@@ -507,7 +617,7 @@ export default function TradingTab() {
                       </div>
 
                       {/* Stop Loss and Take Profit */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3 mb-4">
                         <div className="text-center">
                           <div className="text-xs text-gray-500 mb-1">Cắt Lỗ</div>
                           <div className="text-sm font-medium text-red-600">
@@ -521,6 +631,14 @@ export default function TradingTab() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Sell Button */}
+                      <button
+                        onClick={() => handleSellClick(buy)}
+                        className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                      >
+                        <span>Bán Cổ Phiếu</span>
+                      </button>
                     </div>
                   );
                 })}
@@ -559,6 +677,9 @@ export default function TradingTab() {
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Trạng Thái
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Hành Động
                       </th>
                     </tr>
                   </thead>
@@ -618,6 +739,14 @@ export default function TradingTab() {
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(buy.status)}`}>
                               {getStatusText(buy.status)}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => handleSellClick(buy)}
+                              className="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95"
+                            >
+                              Bán
+                            </button>
                           </td>
                         </tr>
                       );
@@ -762,6 +891,137 @@ export default function TradingTab() {
           </div>
         )}
       </div>
+
+      {/* Sell Dialog */}
+      {showSellDialog && selectedBuy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Nhập thông tin bán</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedBuy.symbol} • Khối lượng mua: {selectedBuy.volume.toLocaleString('vi-VN')} CP
+                </p>
+              </div>
+              <button
+                onClick={handleCloseSellDialog}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-4">
+                {/* Buy Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Giá mua</p>
+                    <p className="font-medium">{formatCurrency(selectedBuy.enter_price)}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs text-gray-500 mb-1">Khối lượng mua</p>
+                    <p className="font-medium">{selectedBuy.volume.toLocaleString('vi-VN')} CP</p>
+                  </div>
+                </div>
+
+                {/* Sell Form */}
+                <div className="space-y-4">
+                  {/* Sell Price */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="h-4 w-4 text-gray-500" />
+                        Giá bán
+                      </div>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={sellForm.sell_price}
+                      onChange={(e) => handleSellFormChange('sell_price', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                      placeholder="Nhập giá bán"
+                    />
+                  </div>
+
+                  {/* Volume */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      <div className="flex items-center gap-1">
+                        <Package className="h-4 w-4 text-gray-500" />
+                        Khối lượng bán (số lượng cổ phiếu)
+                      </div>
+                    </label>
+                    <input
+                      type="number"
+                      value={sellForm.volume}
+                      onChange={(e) => handleSellFormChange('volume', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                      placeholder={`Tối đa: ${selectedBuy.volume.toLocaleString('vi-VN')}`}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Khối lượng mua: {selectedBuy.volume.toLocaleString('vi-VN')} CP
+                    </p>
+                  </div>
+
+                  {/* Sell Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        Ngày bán
+                      </div>
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="date"
+                        value={sellForm.sell_date}
+                        onChange={(e) => handleSellFormChange('sell_date', e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Save Message */}
+                {saveMessage && (
+                  <div className={`p-3 rounded-lg ${saveMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    <p className="text-sm">{saveMessage.text}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="p-4 border-t">
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCloseSellDialog}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors active:scale-95"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleSaveSell}
+                  disabled={isSaving}
+                  className="flex-1 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Đang lưu...
+                    </div>
+                  ) : 'Lưu thông tin bán'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
