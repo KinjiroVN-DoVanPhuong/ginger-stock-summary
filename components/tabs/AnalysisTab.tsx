@@ -59,9 +59,14 @@ export default function AnalysisTab() {
       await analysisService.createAnalyseRequest(symbol.trim());
       setSymbol('');
       alert('Yêu cầu phân tích đã được gửi thành công!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating analysis request:', error);
-      alert('Có lỗi xảy ra khi gửi yêu cầu phân tích');
+      // Show specific error message for duplicate requests, otherwise generic error
+      if (error.message && error.message.includes('Đã thực hiện phân tích')) {
+        alert(error.message);
+      } else {
+        alert('Có lỗi xảy ra khi gửi yêu cầu phân tích');
+      }
     } finally {
       setLoading(false);
     }

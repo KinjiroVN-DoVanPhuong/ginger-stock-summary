@@ -57,8 +57,28 @@ export const analysisService = {
         return requests;
     },
 
+    // Check if analysis request already exists for symbol today
+    async checkDuplicateAnalyseRequest(symbol: string): Promise<boolean> {
+        const requests = await this.getAnalyseRequests();
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+        const todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1; // End of day
+        
+        return requests.some(request => {
+            const isSameSymbol = request.symbol.toLowerCase() === symbol.toLowerCase();
+            const isToday = request.created_at >= todayStart && request.created_at <= todayEnd;
+            return isSameSymbol && isToday;
+        });
+    },
+
     // Create a new analysis request
     async createAnalyseRequest(symbol: string): Promise<string> {
+        // Check for duplicate request today
+        const isDuplicate = await this.checkDuplicateAnalyseRequest(symbol);
+        if (isDuplicate) {
+            throw new Error(`Đã thực hiện phân tích cho mã ${symbol.toUpperCase()} hôm nay. Vui lòng thử lại vào ngày mai.`);
+        }
+
         const requestsRef = ref(database, ANALYSE_REQUESTS_PATH);
         const newRequestRef = push(requestsRef);
         
