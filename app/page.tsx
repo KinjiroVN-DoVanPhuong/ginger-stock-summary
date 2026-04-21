@@ -3,15 +3,14 @@
 import { useState, useEffect } from 'react';
 import { tradingService } from '@/services/tradingService';
 import { TradingSignal, TradeResult, MatchedTrade } from '@/types/trading';
-import { TrendingUp, BarChart3, DollarSign, PieChart } from 'lucide-react';
+import { TrendingUp, BarChart3, DollarSign } from 'lucide-react';
 
 // Import tab components
 import SignalsTab from '@/components/tabs/SignalsTab';
 import AnalysisTab from '@/components/tabs/AnalysisTab';
 import TradingTab from '@/components/tabs/TradingTab';
-import AssetsTab from '@/components/tabs/AssetsTab';
 
-type TabType = 'signals' | 'analysis' | 'trading' | 'assets';
+type TabType = 'signals' | 'analysis' | 'trading';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('trading');
@@ -97,7 +96,6 @@ export default function Home() {
     { id: 'signals', label: 'Tín Hiệu', icon: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> },
     { id: 'analysis', label: 'Phân Tích', icon: <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" /> },
     { id: 'trading', label: 'Giao Dịch', icon: <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" /> },
-    { id: 'assets', label: 'Tài Sản', icon: <PieChart className="h-4 w-4 sm:h-5 sm:w-5" /> },
   ];
 
   return (
@@ -186,10 +184,6 @@ export default function Home() {
 
           {activeTab === 'trading' && (
             <TradingTab />
-          )}
-
-          {activeTab === 'assets' && (
-            <AssetsTab />
           )}
         </div>
       </div>
