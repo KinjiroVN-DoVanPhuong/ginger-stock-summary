@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AppLayout } from "@/components/AppLayout";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Stock Trading Performance Dashboard",
-  description: "Real-time monitoring of AI trading signals and results using Firebase Realtime Database",
+  title: "Ginger Stock Summary",
+  description: "Stock transactions and trading signals manager",
 };
 
 export default function RootLayout({
@@ -20,16 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="vi"
-      className={`${inter.variable} h-full antialiased`}
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
-      <head>
-        <meta charSet="UTF-8" />
-      </head>
-      <body className="min-h-full flex flex-col">
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+      <body>
+        <AppLayout>{children}</AppLayout>
       </body>
     </html>
   );

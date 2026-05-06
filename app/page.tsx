@@ -1,196 +1,84 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { tradingService } from '@/services/tradingService';
-import { TradingSignal, TradeResult, MatchedTrade } from '@/types/trading';
-import { TrendingUp, BarChart3, DollarSign, PieChart } from 'lucide-react';
-
-// Import tab components
-import SignalsTab from '@/components/tabs/SignalsTab';
-import AnalysisTab from '@/components/tabs/AnalysisTab';
-import TradingTab from '@/components/tabs/TradingTab';
-import StatisticsTab from '@/components/tabs/StatisticsTab';
-
-type TabType = 'signals' | 'analysis' | 'trading' | 'statistics';
+import { useFirebase } from "@/lib/firebase";
+import Link from "next/link";
+import { Activity, Database, AlertCircle, TrendingUp } from "lucide-react";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<TabType>('trading');
-  const [tradingSignals, setTradingSignals] = useState<TradingSignal[]>([]);
-  const [tradeResults, setTradeResults] = useState<TradeResult[]>([]);
-  const [matchedTrades, setMatchedTrades] = useState<MatchedTrade[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isConfigured } = useFirebase();
 
-  // Load data on component mount
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [signals, results] = await Promise.all([
-          tradingService.getTradingSignals(),
-          tradingService.getTradeResults()
-        ]);
-
-        setTradingSignals(signals);
-        setTradeResults(results);
-
-        const matched = tradingService.matchTradesWithSignals(signals, results);
-        setMatchedTrades(matched);
-      } catch (err) {
-        console.error('Error loading data:', err);
-        setError('Không thể tải dữ liệu giao dịch. Vui lòng kiểm tra kết nối Firebase của bạn.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Set up real-time listeners
-    const unsubscribeSignals = tradingService.subscribeToTradingSignals((signals) => {
-      setTradingSignals(signals);
-      const matched = tradingService.matchTradesWithSignals(signals, tradeResults);
-      setMatchedTrades(matched);
-    });
-
-    const unsubscribeResults = tradingService.subscribeToTradeResults((results) => {
-      setTradeResults(results);
-      const matched = tradingService.matchTradesWithSignals(tradingSignals, results);
-      setMatchedTrades(matched);
-    });
-
-    // Cleanup subscriptions
-    return () => {
-      unsubscribeSignals();
-      unsubscribeResults();
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải bảng điều khiển giao dịch...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Lỗi Kết Nối</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <p className="text-sm text-gray-500">
-            Đảm bảo cấu hình Firebase của bạn chính xác trong <code>lib/firebase/config.ts</code>
+  return (
+    <div className="animate-fade-in">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem" }}>
+            Overview of your trading activity and signals.
           </p>
         </div>
       </div>
-    );
-  }
 
-  const tabs = [
-    { id: 'signals', label: 'Tín Hiệu', icon: <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" /> },
-    { id: 'analysis', label: 'Phân Tích', icon: <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" /> },
-    { id: 'trading', label: 'Giao Dịch', icon: <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" /> },
-    { id: 'statistics', label: 'Thống Kê', icon: <PieChart className="h-4 w-4 sm:h-5 sm:w-5" /> },
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6">
-        {/* Mobile Tab Menu Button */}
-        <div className="sm:hidden mb-4">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex items-center justify-between w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm"
-          >
-            <div className="flex items-center gap-2">
-              {tabs.find(tab => tab.id === activeTab)?.icon}
-              <span className="font-medium">{tabs.find(tab => tab.id === activeTab)?.label}</span>
+      {!isConfigured && (
+        <div className="card" style={{ borderLeft: "4px solid var(--warning)", background: "rgba(245, 158, 11, 0.05)" }}>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+            <AlertCircle color="var(--warning)" />
+            <div>
+              <h3 style={{ fontWeight: 600, marginBottom: "0.5rem" }}>Firebase Not Configured</h3>
+              <p style={{ color: "var(--text-secondary)", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                You need to connect to your Firebase Realtime Database to use the application.
+              </p>
+              <Link href="/settings" className="btn btn-primary">
+                Configure Firebase
+              </Link>
             </div>
-            <svg
-              className={`w-5 h-5 transition-transform ${mobileMenuOpen ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {/* Mobile Tab Menu Dropdown */}
-          {mobileMenuOpen && (
-            <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id as TabType);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`
-                    flex items-center gap-3 w-full px-4 py-3 text-left transition-colors
-                    ${activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                    }
-                    ${tab.id !== 'signals' ? 'border-t border-gray-100' : ''}
-                  `}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Tab Navigation */}
-        <div className="hidden sm:block mb-6">
-          <div className="flex gap-2 border-b border-gray-200">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
-                className={`
-                  flex items-center justify-start gap-2 px-4 py-4 text-sm font-medium transition-colors
-                  ${activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
           </div>
         </div>
+      )}
 
-        {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-          {activeTab === 'signals' && (
-            <SignalsTab
-              tradingSignals={tradingSignals}
-            />
-          )}
+      <div className="grid-cols-3">
+        <div className="card glass-panel">
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+            <div style={{ padding: "0.75rem", background: "rgba(99, 102, 241, 0.1)", borderRadius: "var(--radius-md)" }}>
+              <TrendingUp color="var(--primary)" />
+            </div>
+            <h3 style={{ fontWeight: 600 }}>Transactions</h3>
+          </div>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+            Manage your manual buy and sell orders.
+          </p>
+          <Link href="/transactions" className="btn" style={{ background: "rgba(99, 102, 241, 0.1)", color: "var(--primary)", width: "100%" }}>
+            View Transactions
+          </Link>
+        </div>
 
-          {activeTab === 'analysis' && (
-            <AnalysisTab />
-          )}
+        <div className="card glass-panel">
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+            <div style={{ padding: "0.75rem", background: "rgba(16, 185, 129, 0.1)", borderRadius: "var(--radius-md)" }}>
+              <Activity color="var(--success)" />
+            </div>
+            <h3 style={{ fontWeight: 600 }}>Signal Requests</h3>
+          </div>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+            Track requests for trading signals.
+          </p>
+          <Link href="/signal-requests" className="btn" style={{ background: "rgba(16, 185, 129, 0.1)", color: "var(--success)", width: "100%" }}>
+            View Requests
+          </Link>
+        </div>
 
-          {activeTab === 'trading' && (
-            <TradingTab />
-          )}
-
-          {activeTab === 'statistics' && (
-            <StatisticsTab />
-          )}
+        <div className="card glass-panel">
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1rem" }}>
+            <div style={{ padding: "0.75rem", background: "rgba(245, 158, 11, 0.1)", borderRadius: "var(--radius-md)" }}>
+              <Database color="var(--warning)" />
+            </div>
+            <h3 style={{ fontWeight: 600 }}>Trading Signals</h3>
+          </div>
+          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+            Explore available trading signals.
+          </p>
+          <Link href="/signals" className="btn" style={{ background: "rgba(245, 158, 11, 0.1)", color: "var(--warning)", width: "100%" }}>
+            View Signals
+          </Link>
         </div>
       </div>
     </div>
