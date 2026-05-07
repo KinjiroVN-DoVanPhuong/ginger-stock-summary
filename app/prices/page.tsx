@@ -8,6 +8,7 @@ import { BarChart3, AlertCircle, Clock } from "lucide-react";
 import Link from "next/link";
 
 interface CurrentPrice {
+  symbol?: string;
   price: number;
   updated_at: number;
 }

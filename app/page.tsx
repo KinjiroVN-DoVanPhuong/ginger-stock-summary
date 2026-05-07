@@ -28,6 +28,7 @@ interface Deposit {
 }
 
 interface CurrentPrice {
+  symbol?: string;
   price: number;
   updated_at: number;
 }
