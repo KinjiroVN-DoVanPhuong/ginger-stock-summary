@@ -1,14 +1,15 @@
 // src/components/Layout/BottomNav.jsx
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Briefcase, ArrowLeftRight, Wallet, Settings } from 'lucide-react';
 import { isFirebaseConfigured } from '../../firebase/config';
 
 const NAV_ITEMS = [
-  { to: '/',             icon: '🏠', label: 'Tổng quan' },
-  { to: '/portfolio',    icon: '💼', label: 'Danh mục'  },
-  { to: '/transactions', icon: '📋', label: 'Giao dịch' },
-  { to: '/cash',         icon: '💰', label: 'Tiền mặt'  },
-  { to: '/settings',     icon: '⚙️',  label: 'Cài đặt'  },
+  { to: '/',             Icon: LayoutDashboard, label: 'Tổng quan' },
+  { to: '/portfolio',    Icon: Briefcase,        label: 'Danh mục'  },
+  { to: '/transactions', Icon: ArrowLeftRight,   label: 'Giao dịch' },
+  { to: '/cash',         Icon: Wallet,           label: 'Tiền mặt'  },
+  { to: '/settings',     Icon: Settings,         label: 'Cài đặt'   },
 ];
 
 export default function BottomNav() {
@@ -16,7 +17,7 @@ export default function BottomNav() {
 
   return (
     <nav className="bottom-nav">
-      {NAV_ITEMS.map(({ to, icon, label }) => (
+      {NAV_ITEMS.map(({ to, Icon, label }) => (
         <NavLink
           key={to}
           to={to}
@@ -24,7 +25,7 @@ export default function BottomNav() {
           className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
         >
           <span className="nav-icon-wrap">
-            <span className="nav-icon">{icon}</span>
+            <Icon size={22} strokeWidth={1.8} className="nav-icon" />
             {to === '/settings' && !configured && (
               <span className="nav-dot" aria-label="Chưa cài đặt" />
             )}

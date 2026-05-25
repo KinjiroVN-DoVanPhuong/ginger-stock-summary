@@ -1,6 +1,6 @@
-// src/App.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { TrendingUp } from 'lucide-react';
 import Header from './components/Layout/Header';
 import BottomNav from './components/Layout/BottomNav';
 import DemoBanner from './components/common/DemoBanner';
@@ -105,8 +105,10 @@ export default function App() {
       }}>
         <div style={{
           width: 52, height: 52, background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-          borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26,
-        }}>📈</div>
+          borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <TrendingUp size={26} strokeWidth={2} color="white" />
+        </div>
         <div className="spinner" />
         <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Đang kết nối Firebase...</div>
       </div>

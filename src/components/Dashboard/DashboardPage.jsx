@@ -1,6 +1,7 @@
 // src/components/Dashboard/DashboardPage.jsx
 import React, { useMemo } from 'react';
-import { formatVND, formatPercent } from '../../utils/formatters';
+import { TrendingUp, TrendingDown, BarChart2, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { formatVND } from '../../utils/formatters';
 import { calcPortfolio, calcRealizedPnL } from '../../utils/calculator';
 
 export default function DashboardPage({ transactions, cashBalance }) {
@@ -13,19 +14,19 @@ export default function DashboardPage({ transactions, cashBalance }) {
   );
 
   const totalAssets = cashBalance + stockValue;
-  const totalInvested = useMemo(() => {
-    return transactions
-      .filter((t) => t.type === 'BUY')
-      .reduce((sum, t) => sum + t.totalCost, 0);
-  }, [transactions]);
 
-  const totalSellReceived = useMemo(() => {
-    return transactions
-      .filter((t) => t.type === 'SELL')
-      .reduce((sum, t) => sum + t.netReceived, 0);
-  }, [transactions]);
+  const totalInvested = useMemo(() =>
+    transactions.filter((t) => t.type === 'BUY').reduce((sum, t) => sum + t.totalCost, 0),
+    [transactions]
+  );
+
+  const totalSellReceived = useMemo(() =>
+    transactions.filter((t) => t.type === 'SELL').reduce((sum, t) => sum + t.netReceived, 0),
+    [transactions]
+  );
 
   const stockCount = Object.keys(portfolio).length;
+  const pnlPositive = realizedPnL >= 0;
 
   return (
     <div>
@@ -41,24 +42,42 @@ export default function DashboardPage({ transactions, cashBalance }) {
       {/* Stats Grid */}
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-label">Giá trị CP</div>
+          <div className="stat-label-row">
+            <span className="stat-label">Giá trị CP</span>
+            <BarChart2 size={14} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />
+          </div>
           <div className="stat-value blue">{formatVND(stockValue)}</div>
           <div className="stat-sub">Giá vốn</div>
         </div>
+
         <div className="stat-card">
-          <div className="stat-label">Lãi/Lỗ thực hiện</div>
-          <div className={`stat-value ${realizedPnL >= 0 ? 'green' : 'red'}`}>
-            {realizedPnL >= 0 ? '+' : ''}{formatVND(realizedPnL)}
+          <div className="stat-label-row">
+            <span className="stat-label">Lãi/Lỗ thực hiện</span>
+            {pnlPositive
+              ? <TrendingUp size={14} strokeWidth={1.8} style={{ color: 'var(--green)' }} />
+              : <TrendingDown size={14} strokeWidth={1.8} style={{ color: 'var(--red)' }} />
+            }
+          </div>
+          <div className={`stat-value ${pnlPositive ? 'green' : 'red'}`}>
+            {pnlPositive ? '+' : ''}{formatVND(realizedPnL)}
           </div>
           <div className="stat-sub">Sau phí & thuế</div>
         </div>
+
         <div className="stat-card">
-          <div className="stat-label">Tổng đã mua</div>
+          <div className="stat-label-row">
+            <span className="stat-label">Tổng đã mua</span>
+            <ArrowDownRight size={14} strokeWidth={1.8} style={{ color: 'var(--red)' }} />
+          </div>
           <div className="stat-value">{formatVND(totalInvested)}</div>
           <div className="stat-sub">Bao gồm phí</div>
         </div>
+
         <div className="stat-card">
-          <div className="stat-label">Tổng đã nhận</div>
+          <div className="stat-label-row">
+            <span className="stat-label">Tổng đã nhận</span>
+            <ArrowUpRight size={14} strokeWidth={1.8} style={{ color: 'var(--green)' }} />
+          </div>
           <div className="stat-value green">{formatVND(totalSellReceived)}</div>
           <div className="stat-sub">Sau phí & thuế</div>
         </div>
@@ -70,14 +89,10 @@ export default function DashboardPage({ transactions, cashBalance }) {
           <div className="section-title">Đang nắm giữ</div>
           {Object.entries(portfolio).map(([symbol, data]) => (
             <div key={symbol} className="stock-item">
-              <div className="stock-avatar">
-                {symbol.slice(0, 3)}
-              </div>
+              <div className="stock-avatar">{symbol.slice(0, 3)}</div>
               <div className="stock-body">
                 <div className="stock-symbol">{symbol}</div>
-                <div className="stock-detail">
-                  Giá vốn TB: {formatVND(data.avgCost)}/cp
-                </div>
+                <div className="stock-detail">Giá vốn TB: {formatVND(data.avgCost)}/cp</div>
               </div>
               <div className="stock-values">
                 <div className="stock-qty">{data.quantity.toLocaleString('vi-VN')} cp</div>
@@ -90,11 +105,9 @@ export default function DashboardPage({ transactions, cashBalance }) {
 
       {transactions.length === 0 && (
         <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
+          <BarChart2 size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: 12 }} />
           <div className="empty-state-title">Chưa có giao dịch nào</div>
-          <div className="empty-state-desc">
-            Thêm tiền mặt và bắt đầu giao dịch để xem tổng quan
-          </div>
+          <div className="empty-state-desc">Thêm tiền mặt và bắt đầu giao dịch để xem tổng quan</div>
         </div>
       )}
     </div>

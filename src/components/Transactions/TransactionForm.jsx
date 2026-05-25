@@ -1,5 +1,6 @@
 // src/components/Transactions/TransactionForm.jsx
 import React, { useState, useMemo } from 'react';
+import { TrendingUp, TrendingDown, X } from 'lucide-react';
 import { calcBuy, calcSell } from '../../utils/calculator';
 import { formatVND, formatNumber } from '../../utils/formatters';
 
@@ -30,15 +31,11 @@ export default function TransactionForm({ onSubmit, onClose, cashBalance }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-
     if (!symbol.trim()) return setError('Vui lòng nhập mã cổ phiếu');
     if (!qty || qty <= 0) return setError('Số lượng không hợp lệ');
     if (!prc || prc <= 0) return setError('Giá không hợp lệ');
-
-    if (type === 'BUY') {
-      if (calc.totalCost > cashBalance) {
-        return setError(`Không đủ tiền mặt. Cần ${formatVND(calc.totalCost)}, hiện có ${formatVND(cashBalance)}`);
-      }
+    if (type === 'BUY' && calc.totalCost > cashBalance) {
+      return setError(`Không đủ tiền mặt. Cần ${formatVND(calc.totalCost)}, hiện có ${formatVND(cashBalance)}`);
     }
 
     setLoading(true);
@@ -66,7 +63,13 @@ export default function TransactionForm({ onSubmit, onClose, cashBalance }) {
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-sheet">
         <div className="modal-handle" />
-        <div className="modal-title">Thêm giao dịch mới</div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div className="modal-title" style={{ marginBottom: 0 }}>Thêm giao dịch</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+            <X size={20} strokeWidth={2} />
+          </button>
+        </div>
 
         {/* Type Toggle */}
         <div className="type-toggle">
@@ -75,14 +78,16 @@ export default function TransactionForm({ onSubmit, onClose, cashBalance }) {
             onClick={() => setType('BUY')}
             type="button"
           >
-            📈 Mua
+            <TrendingUp size={16} strokeWidth={2} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+            Mua
           </button>
           <button
             className={`type-btn sell ${type === 'SELL' ? 'active' : ''}`}
             onClick={() => setType('SELL')}
             type="button"
           >
-            📉 Bán
+            <TrendingDown size={16} strokeWidth={2} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+            Bán
           </button>
         </div>
 
@@ -131,7 +136,7 @@ export default function TransactionForm({ onSubmit, onClose, cashBalance }) {
                 <span>{formatVND(calc.grossAmount)}</span>
               </div>
               <div className="fee-row">
-                <span>Phí ({type === 'BUY' ? '0.25%' : '0.25%'})</span>
+                <span>Phí (0.25%)</span>
                 <span>- {formatVND(calc.fee)}</span>
               </div>
               {type === 'SELL' && (
@@ -140,7 +145,7 @@ export default function TransactionForm({ onSubmit, onClose, cashBalance }) {
                   <span>- {formatVND(calc.tax)}</span>
                 </div>
               )}
-              <div className={`fee-row total`}>
+              <div className="fee-row total">
                 <span>{type === 'BUY' ? 'Tổng tiền cần' : 'Tiền nhận về'}</span>
                 <span className={`fee-value ${type === 'BUY' ? 'buy' : 'sell'}`}>
                   {formatVND(type === 'BUY' ? calc.totalCost : calc.netReceived)}
@@ -161,28 +166,22 @@ export default function TransactionForm({ onSubmit, onClose, cashBalance }) {
 
           {error && (
             <div style={{
-              background: 'var(--red-light)',
-              color: 'var(--red)',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '13px',
-              fontWeight: 500,
-              marginBottom: '14px',
+              background: 'var(--red-light)', color: 'var(--red)',
+              padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+              fontSize: '13px', fontWeight: 500, marginBottom: '14px',
             }}>
-              ⚠️ {error}
+              {error}
             </div>
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Huỷ
-            </button>
+            <button type="button" className="btn btn-ghost" onClick={onClose}>Huỷ</button>
             <button
               type="submit"
               className={`btn ${type === 'BUY' ? 'btn-primary' : 'btn-danger'}`}
               disabled={loading}
             >
-              {loading ? '...' : type === 'BUY' ? '📈 Mua' : '📉 Bán'}
+              {loading ? '...' : type === 'BUY' ? 'Xác nhận mua' : 'Xác nhận bán'}
             </button>
           </div>
         </form>

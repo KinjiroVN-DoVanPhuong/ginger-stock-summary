@@ -1,16 +1,17 @@
 // src/components/Transactions/TransactionPage.jsx
 import React, { useState } from 'react';
+import { TrendingUp, TrendingDown, Trash2, Plus, ClipboardList } from 'lucide-react';
 import { formatVND, formatDate, formatNumber } from '../../utils/formatters';
 import { deleteTransaction } from '../../firebase/db';
 import TransactionForm from './TransactionForm';
 
 const FILTERS = [
   { key: 'ALL',  label: 'Tất cả' },
-  { key: 'BUY',  label: '📈 Mua'  },
-  { key: 'SELL', label: '📉 Bán'  },
+  { key: 'BUY',  label: 'Mua'    },
+  { key: 'SELL', label: 'Bán'    },
 ];
 
-export default function TransactionPage({ transactions, cashBalance, onAddTransaction, onToast }) {
+export default function TransactionPage({ transactions, cashBalance, onAddTransaction, onToast, isDemo }) {
   const [filter, setFilter] = useState('ALL');
   const [showForm, setShowForm] = useState(false);
 
@@ -19,12 +20,13 @@ export default function TransactionPage({ transactions, cashBalance, onAddTransa
     : transactions.filter((t) => t.type === filter);
 
   async function handleDelete(tx) {
+    if (isDemo) { onToast('⚙️ Cần cài đặt Firebase để xoá giao dịch'); return; }
     if (!window.confirm(`Xoá giao dịch ${tx.type === 'BUY' ? 'mua' : 'bán'} ${tx.symbol}?`)) return;
     try {
       await deleteTransaction(tx.id);
-      onToast('✅ Đã xoá giao dịch');
+      onToast('Đã xoá giao dịch');
     } catch {
-      onToast('❌ Lỗi khi xoá');
+      onToast('Lỗi khi xoá');
     }
   }
 
@@ -51,65 +53,60 @@ export default function TransactionPage({ transactions, cashBalance, onAddTransa
       {/* List */}
       {filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📋</div>
+          <ClipboardList size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: 12 }} />
           <div className="empty-state-title">Chưa có giao dịch nào</div>
-          <div className="empty-state-desc">
-            Nhấn nút + bên dưới để thêm giao dịch mới
-          </div>
+          <div className="empty-state-desc">Nhấn nút + bên dưới để thêm giao dịch mới</div>
         </div>
       ) : (
         <div className="card">
-          {filtered.map((tx) => (
-            <div key={tx.id} className="tx-item">
-              <div className={`tx-icon ${tx.type.toLowerCase()}`}>
-                {tx.type === 'BUY' ? '📈' : '📉'}
-              </div>
-              <div className="tx-body">
-                <div className="tx-title">
-                  <strong>{tx.symbol}</strong>
-                  <span className={`badge ${tx.type.toLowerCase()}`}>
-                    {tx.type === 'BUY' ? 'Mua' : 'Bán'}
-                  </span>
+          {filtered.map((tx) => {
+            const isBuy = tx.type === 'BUY';
+            return (
+              <div key={tx.id} className="tx-item">
+                <div className={`tx-icon ${isBuy ? 'buy' : 'sell'}`}>
+                  {isBuy
+                    ? <TrendingUp size={18} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />
+                    : <TrendingDown size={18} strokeWidth={1.8} style={{ color: 'var(--red)' }} />
+                  }
                 </div>
-                <div className="tx-meta">
-                  {formatNumber(tx.quantity)} cp × {formatVND(tx.price)} · {formatDate(tx.createdAt)}
-                </div>
-                {tx.note && (
-                  <div className="tx-meta" style={{ fontStyle: 'italic' }}>
-                    "{tx.note}"
+                <div className="tx-body">
+                  <div className="tx-title">
+                    <strong>{tx.symbol}</strong>
+                    <span className={`badge ${isBuy ? 'buy' : 'sell'}`}>
+                      {isBuy ? 'Mua' : 'Bán'}
+                    </span>
                   </div>
+                  <div className="tx-meta">
+                    {formatNumber(tx.quantity)} cp × {formatVND(tx.price)} · {formatDate(tx.createdAt)}
+                  </div>
+                  {tx.note && (
+                    <div className="tx-meta" style={{ fontStyle: 'italic' }}>"{tx.note}"</div>
+                  )}
+                </div>
+                <div className="tx-amount">
+                  <div className={`tx-amount-value ${isBuy ? 'buy' : 'sell'}`}>
+                    {isBuy ? `- ${formatVND(tx.totalCost)}` : `+ ${formatVND(tx.netReceived)}`}
+                  </div>
+                  <div className="tx-amount-sub">
+                    {isBuy ? `Phí: ${formatVND(tx.fee)}` : `Thuế: ${formatVND(tx.tax)}`}
+                  </div>
+                </div>
+                {!isDemo && (
+                  <button className="delete-btn" onClick={() => handleDelete(tx)} title="Xoá giao dịch">
+                    <Trash2 size={15} strokeWidth={1.8} />
+                  </button>
                 )}
               </div>
-              <div className="tx-amount">
-                <div className={`tx-amount-value ${tx.type.toLowerCase()}`}>
-                  {tx.type === 'BUY'
-                    ? `- ${formatVND(tx.totalCost)}`
-                    : `+ ${formatVND(tx.netReceived)}`}
-                </div>
-                <div className="tx-amount-sub">
-                  {tx.type === 'BUY'
-                    ? `Phí: ${formatVND(tx.fee)}`
-                    : `Thuế: ${formatVND(tx.tax)}`}
-                </div>
-              </div>
-              <button
-                className="delete-btn"
-                onClick={() => handleDelete(tx)}
-                title="Xoá giao dịch"
-              >
-                🗑
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
       {/* FAB */}
       <button className="fab" onClick={() => setShowForm(true)} title="Thêm giao dịch">
-        +
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
-      {/* Form Modal */}
       {showForm && (
         <TransactionForm
           onSubmit={onAddTransaction}

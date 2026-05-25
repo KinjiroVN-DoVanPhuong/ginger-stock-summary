@@ -1,12 +1,15 @@
 // src/components/Layout/Header.jsx
 import React from 'react';
+import { TrendingUp } from 'lucide-react';
 import { formatVND } from '../../utils/formatters';
 
 export default function Header({ cashBalance, isDemo }) {
   return (
     <header className="header">
       <div className="header-logo">
-        <div className="header-logo-icon">📈</div>
+        <div className="header-logo-icon">
+          <TrendingUp size={18} strokeWidth={2.2} color="white" />
+        </div>
         <div>
           <span className="header-logo-text">Ginger Stock</span>
           {isDemo && <span className="demo-chip">DEMO</span>}

@@ -1,12 +1,13 @@
 // src/components/Cash/CashPage.jsx
 import React, { useState } from 'react';
+import { ArrowDownCircle, ArrowUpCircle, Wallet, X } from 'lucide-react';
 import { formatVND, formatDate } from '../../utils/formatters';
 
-export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast }) {
+export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast, isDemo }) {
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
-  const [actionType, setActionType] = useState('IN'); // IN | OUT
+  const [actionType, setActionType] = useState('IN');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,6 +19,7 @@ export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (isDemo) { onToast('⚙️ Cần cài đặt Firebase trước'); return; }
     const numAmount = parseInt(amount.replace(/\D/g, ''), 10) || 0;
     if (!numAmount || numAmount <= 0) return setError('Vui lòng nhập số tiền hợp lệ');
     if (actionType === 'OUT' && numAmount > cashBalance) {
@@ -30,7 +32,7 @@ export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast 
       setAmount('');
       setNote('');
       setShowForm(false);
-      onToast(`✅ ${actionType === 'IN' ? 'Đã nạp' : 'Đã rút'} ${formatVND(numAmount)}`);
+      onToast(`${actionType === 'IN' ? 'Đã nạp' : 'Đã rút'} ${formatVND(numAmount)}`);
     } catch {
       setError('Lỗi khi lưu. Vui lòng thử lại.');
     } finally {
@@ -53,13 +55,15 @@ export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast 
           className="btn btn-success"
           onClick={() => { setActionType('IN'); setShowForm(true); setError(''); }}
         >
-          + Nạp tiền
+          <ArrowDownCircle size={16} strokeWidth={2} />
+          Nạp tiền
         </button>
         <button
           className="btn btn-ghost"
           onClick={() => { setActionType('OUT'); setShowForm(true); setError(''); }}
         >
-          - Rút tiền
+          <ArrowUpCircle size={16} strokeWidth={2} />
+          Rút tiền
         </button>
       </div>
 
@@ -71,38 +75,42 @@ export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast 
 
       {cashHistory.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">💰</div>
+          <Wallet size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: 12 }} />
           <div className="empty-state-title">Chưa có lịch sử</div>
           <div className="empty-state-desc">Nạp tiền để bắt đầu đầu tư</div>
         </div>
       ) : (
         <div className="card">
-          {cashHistory.map((entry) => (
-            <div key={entry.id} className="tx-item">
-              <div className={`tx-icon cash`}>
-                {entry.type === 'IN' ? '💚' : '🔴'}
-              </div>
-              <div className="tx-body">
-                <div className="tx-title">
-                  {entry.type === 'IN' ? 'Nạp tiền' : 'Rút tiền'}
-                  <span className={`badge ${entry.type === 'IN' ? 'cash-in' : 'cash-out'}`}>
-                    {entry.type === 'IN' ? 'Nạp' : 'Rút'}
-                  </span>
+          {cashHistory.map((entry) => {
+            const isIn = entry.type === 'IN';
+            return (
+              <div key={entry.id} className="tx-item">
+                <div className="tx-icon cash">
+                  {isIn
+                    ? <ArrowDownCircle size={18} strokeWidth={1.8} style={{ color: 'var(--green)' }} />
+                    : <ArrowUpCircle size={18} strokeWidth={1.8} style={{ color: 'var(--red)' }} />
+                  }
                 </div>
-                <div className="tx-meta">{formatDate(entry.createdAt)}</div>
-                {entry.note && (
-                  <div className="tx-meta" style={{ fontStyle: 'italic' }}>
-                    "{entry.note}"
+                <div className="tx-body">
+                  <div className="tx-title">
+                    {isIn ? 'Nạp tiền' : 'Rút tiền'}
+                    <span className={`badge ${isIn ? 'cash-in' : 'cash-out'}`}>
+                      {isIn ? 'Nạp' : 'Rút'}
+                    </span>
                   </div>
-                )}
-              </div>
-              <div className="tx-amount">
-                <div className={`tx-amount-value ${entry.type === 'IN' ? 'sell' : 'buy'}`}>
-                  {entry.type === 'IN' ? '+' : '-'} {formatVND(entry.amount)}
+                  <div className="tx-meta">{formatDate(entry.createdAt)}</div>
+                  {entry.note && (
+                    <div className="tx-meta" style={{ fontStyle: 'italic' }}>"{entry.note}"</div>
+                  )}
+                </div>
+                <div className="tx-amount">
+                  <div className={`tx-amount-value ${isIn ? 'sell' : 'buy'}`}>
+                    {isIn ? '+' : '-'} {formatVND(entry.amount)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -111,8 +119,18 @@ export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast 
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
           <div className="modal-sheet">
             <div className="modal-handle" />
-            <div className="modal-title">
-              {actionType === 'IN' ? '💚 Nạp tiền mặt' : '🔴 Rút tiền mặt'}
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div className="modal-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                {actionType === 'IN'
+                  ? <ArrowDownCircle size={20} strokeWidth={1.8} style={{ color: 'var(--green)' }} />
+                  : <ArrowUpCircle size={20} strokeWidth={1.8} style={{ color: 'var(--red)' }} />
+                }
+                {actionType === 'IN' ? 'Nạp tiền mặt' : 'Rút tiền mặt'}
+              </div>
+              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+                <X size={20} strokeWidth={2} />
+              </button>
             </div>
 
             <form onSubmit={handleSubmit}>
@@ -140,22 +158,16 @@ export default function CashPage({ cashBalance, cashHistory, onAddCash, onToast 
 
               {error && (
                 <div style={{
-                  background: 'var(--red-light)',
-                  color: 'var(--red)',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  marginBottom: '14px',
+                  background: 'var(--red-light)', color: 'var(--red)',
+                  padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                  fontSize: '13px', fontWeight: 500, marginBottom: '14px',
                 }}>
-                  ⚠️ {error}
+                  {error}
                 </div>
               )}
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)}>
-                  Huỷ
-                </button>
+                <button type="button" className="btn btn-ghost" onClick={() => setShowForm(false)}>Huỷ</button>
                 <button
                   type="submit"
                   className={`btn ${actionType === 'IN' ? 'btn-success' : 'btn-danger'}`}
