@@ -7,7 +7,9 @@ import { formatVND } from '../../utils/formatters';
 export default function BotPage({ tradingSignals, signalRequests, onToast, isDemo }) {
   const [selectedReason, setSelectedReason] = useState(null);
 
-  const hasRunningRequest = signalRequests.some(r => r.status === 'request' || r.status === 'running');
+  const currentRequest = signalRequests.find(r => r.status === 'request' || r.status === 'running');
+  const isRequesting = currentRequest?.status === 'request';
+  const hasRunningRequest = !!currentRequest;
 
   async function handleRequest() {
     if (isDemo) {
@@ -64,7 +66,7 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
           {hasRunningRequest ? (
             <>
               <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
-              Đang chờ...
+              {isRequesting ? 'Đang chờ...' : 'Đang chạy...'}
             </>
           ) : (
             <>
@@ -137,21 +139,20 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
       {/* Reason Dialog */}
       {selectedReason && (
         <div className="modal-overlay" onClick={() => setSelectedReason(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Lý do khuyến nghị</h3>
-              <button className="icon-btn" onClick={() => setSelectedReason(null)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body" style={{ lineHeight: '1.6', fontSize: '15px' }}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div className="modal-handle" />
+            <div className="modal-title">Lý do khuyến nghị</div>
+            <div style={{ 
+              lineHeight: '1.6', 
+              fontSize: '15px', 
+              color: 'var(--text-secondary)',
+              marginBottom: '24px'
+            }}>
               {selectedReason}
             </div>
-            <div className="modal-footer">
-              <button className="btn-primary" onClick={() => setSelectedReason(null)}>
-                Đóng
-              </button>
-            </div>
+            <button className="btn btn-primary btn-full" onClick={() => setSelectedReason(null)}>
+              Đóng
+            </button>
           </div>
         </div>
       )}
