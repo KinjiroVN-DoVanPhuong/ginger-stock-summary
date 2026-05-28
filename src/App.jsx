@@ -136,7 +136,7 @@ export default function App() {
   return (
     <BrowserRouter>
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-      <Header cashBalance={cashBalance} isDemo={!configured} onLogout={() => {
+      <Header cashBalance={cashBalance} isDemo={!configured} userRole={userRole} onLogout={() => {
         localStorage.removeItem('ginger_user_role');
         setUserRole(null);
       }} />
