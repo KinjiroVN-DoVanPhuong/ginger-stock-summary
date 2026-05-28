@@ -42,21 +42,22 @@ function tryInit(config) {
   }
 }
 
+const envConfig = import.meta.env.VITE_FIREBASE_API_KEY ? {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+} : null;
+
 const stored = getStoredConfig();
 
-if (stored) {
+if (envConfig) {
+  tryInit(envConfig);
+} else if (stored) {
   tryInit(stored);
-} else if (import.meta.env.VITE_FIREBASE_API_KEY) {
-  // Fallback to env vars (for Vercel deploys with env vars set)
-  tryInit({
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  });
 }
 
 export { db };
