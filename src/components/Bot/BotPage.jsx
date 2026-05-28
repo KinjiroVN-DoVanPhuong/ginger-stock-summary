@@ -97,7 +97,6 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
                 <div className="tx-body">
                   <div className="tx-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <strong>{signal.symbol}</strong>
-                    <span className="badge buy">Mua</span>
                     {signal.confidence != null && (
                       <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '11px', background: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
                         AI: {(Number(signal.confidence) <= 1 ? Number(signal.confidence) * 100 : Number(signal.confidence)).toFixed(1)}%
