@@ -102,8 +102,18 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
                     <strong>{signal.symbol}</strong>
                     <span className="badge buy">Mua</span>
                   </div>
-                  <div className="tx-meta">
-                    Ngày: {signal.date}
+                  <div className="tx-meta" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <span>Ngày: {signal.date}</span>
+                    {signal.confidence != null && (
+                      <span style={{ color: 'var(--primary)', fontWeight: 500 }}>
+                        AI: {(Number(signal.confidence) <= 1 ? Number(signal.confidence) * 100 : Number(signal.confidence)).toFixed(1)}%
+                      </span>
+                    )}
+                    {signal.pred_prob != null && (
+                      <span style={{ color: 'var(--green)', fontWeight: 500 }}>
+                        ML: {(Number(signal.pred_prob) <= 1 ? Number(signal.pred_prob) * 100 : Number(signal.pred_prob)).toFixed(1)}%
+                      </span>
+                    )}
                   </div>
                   <div className="tx-meta" style={{ 
                     whiteSpace: 'nowrap', 
