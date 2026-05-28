@@ -384,7 +384,7 @@ body {
 .fab {
   position: fixed;
   bottom: calc(var(--nav-h) + 16px);
-  right: calc(50% - 240px + 16px);
+  right: max(16px, calc(50% - 240px + 16px));
   width: 52px;
   height: 52px;
   border-radius: 50%;
