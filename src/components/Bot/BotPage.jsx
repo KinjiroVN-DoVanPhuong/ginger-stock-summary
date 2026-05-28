@@ -98,22 +98,22 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
                   <Bot size={18} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />
                 </div>
                 <div className="tx-body">
-                  <div className="tx-title">
+                  <div className="tx-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <strong>{signal.symbol}</strong>
                     <span className="badge buy">Mua</span>
-                  </div>
-                  <div className="tx-meta" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    <span>Ngày: {signal.date}</span>
                     {signal.confidence != null && (
-                      <span style={{ color: 'var(--primary)', fontWeight: 500 }}>
+                      <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '11px', background: 'var(--primary-light)', padding: '2px 6px', borderRadius: '4px' }}>
                         AI: {(Number(signal.confidence) <= 1 ? Number(signal.confidence) * 100 : Number(signal.confidence)).toFixed(1)}%
                       </span>
                     )}
                     {signal.pred_prob != null && (
-                      <span style={{ color: 'var(--green)', fontWeight: 500 }}>
+                      <span style={{ color: 'var(--green)', fontWeight: 600, fontSize: '11px', background: 'var(--green-light)', padding: '2px 6px', borderRadius: '4px' }}>
                         ML: {(Number(signal.pred_prob) <= 1 ? Number(signal.pred_prob) * 100 : Number(signal.pred_prob)).toFixed(1)}%
                       </span>
                     )}
+                  </div>
+                  <div className="tx-meta">
+                    Ngày: {signal.date}
                   </div>
                   <div className="tx-meta" style={{ 
                     whiteSpace: 'nowrap', 
