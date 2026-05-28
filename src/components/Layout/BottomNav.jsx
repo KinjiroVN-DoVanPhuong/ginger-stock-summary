@@ -8,8 +8,8 @@ const NAV_ITEMS = [
   { to: '/',             Icon: LayoutDashboard, label: 'Tổng quan' },
   { to: '/portfolio',    Icon: Briefcase,        label: 'Danh mục'  },
   { to: '/transactions', Icon: ArrowLeftRight,   label: 'Giao dịch' },
-  { to: '/bot',          Icon: Bot,              label: 'Bot'       },
   { to: '/cash',         Icon: Wallet,           label: 'Tiền mặt'  },
+  { to: '/bot',          Icon: Bot,              label: 'Bot'       },
 ];
 
 export default function BottomNav() {

@@ -29,26 +29,47 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
         <span className="text-muted text-sm">Tín hiệu giao dịch</span>
       </div>
 
-      <div className="card" style={{ padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
-        <Bot size={48} strokeWidth={1.5} style={{ color: 'var(--primary)', margin: '0 auto 12px' }} />
-        <div style={{ marginBottom: 16, color: 'var(--text-muted)', fontSize: 14 }}>
-          Yêu cầu hệ thống AI phân tích và đưa ra các khuyến nghị giao dịch mới nhất dựa trên dữ liệu thị trường.
+      <div className="card" style={{ padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10,
+            background: 'var(--bg-secondary)', // or similar soft background
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+          }}>
+            <Bot size={22} style={{ color: 'var(--primary)' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-main)', marginBottom: 2 }}>Khuyến nghị AI</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Cập nhật tín hiệu mới nhất</div>
+          </div>
         </div>
         <button
           className="btn-primary"
-          style={{ width: '100%', opacity: hasRunningRequest ? 0.6 : 1 }}
+          style={{ 
+            padding: '8px 14px', 
+            borderRadius: '8px',
+            fontSize: '13px',
+            opacity: hasRunningRequest ? 0.6 : 1,
+            whiteSpace: 'nowrap',
+            margin: 0,
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            height: 'fit-content'
+          }}
           onClick={handleRequest}
           disabled={hasRunningRequest}
         >
           {hasRunningRequest ? (
             <>
-              <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-              Đang phân tích...
+              <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
+              Đang chờ...
             </>
           ) : (
             <>
-              <Play size={18} />
-              Yêu cầu phân tích ngay
+              <Play size={14} fill="currentColor" />
+              Yêu cầu
             </>
           )}
         </button>
