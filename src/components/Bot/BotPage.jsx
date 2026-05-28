@@ -1,0 +1,139 @@
+// src/components/Bot/BotPage.jsx
+import React, { useState } from 'react';
+import { Bot, AlertCircle, Play, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { requestTradingSignal } from '../../firebase/db';
+import { formatVND } from '../../utils/formatters';
+
+export default function BotPage({ tradingSignals, signalRequests, onToast, isDemo }) {
+  const [selectedReason, setSelectedReason] = useState(null);
+
+  const hasRunningRequest = signalRequests.some(r => r.status === 'request' || r.status === 'running');
+
+  async function handleRequest() {
+    if (isDemo) {
+      onToast('⚙️ Cần cài đặt Firebase để sử dụng Bot');
+      return;
+    }
+    try {
+      await requestTradingSignal();
+      onToast('Đã gửi yêu cầu phân tích');
+    } catch (e) {
+      onToast('Lỗi khi gửi yêu cầu');
+    }
+  }
+
+  return (
+    <div>
+      <div className="section-title">
+        Bot AI Phân Tích
+        <span className="text-muted text-sm">Tín hiệu giao dịch</span>
+      </div>
+
+      <div className="card" style={{ padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
+        <Bot size={48} strokeWidth={1.5} style={{ color: 'var(--primary)', margin: '0 auto 12px' }} />
+        <div style={{ marginBottom: 16, color: 'var(--text-muted)', fontSize: 14 }}>
+          Yêu cầu hệ thống AI phân tích và đưa ra các khuyến nghị giao dịch mới nhất dựa trên dữ liệu thị trường.
+        </div>
+        <button
+          className="btn-primary"
+          style={{ width: '100%', opacity: hasRunningRequest ? 0.6 : 1 }}
+          onClick={handleRequest}
+          disabled={hasRunningRequest}
+        >
+          {hasRunningRequest ? (
+            <>
+              <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+              Đang phân tích...
+            </>
+          ) : (
+            <>
+              <Play size={18} />
+              Yêu cầu phân tích ngay
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="section-title" style={{ marginTop: 24 }}>
+        Kết quả phân tích
+        <span className="text-muted text-sm">{tradingSignals.length} tín hiệu</span>
+      </div>
+
+      {tradingSignals.length === 0 ? (
+        <div className="empty-state">
+          <AlertCircle size={48} strokeWidth={1} style={{ opacity: 0.3, marginBottom: 12 }} />
+          <div className="empty-state-title">Chưa có tín hiệu nào</div>
+          <div className="empty-state-desc">Hãy nhấn Yêu cầu phân tích để Bot bắt đầu làm việc.</div>
+        </div>
+      ) : (
+        <div className="card">
+          {tradingSignals.map((signal, index) => {
+            const isBuy = true; // Assuming signals are generally buy recommendations, or we can check signal type if it exists
+            return (
+              <div key={signal.id || index} className="tx-item" style={{ cursor: 'pointer' }} onClick={() => setSelectedReason(signal.reason)}>
+                <div className="tx-icon buy">
+                  <Bot size={18} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />
+                </div>
+                <div className="tx-body">
+                  <div className="tx-title">
+                    <strong>{signal.symbol}</strong>
+                    <span className="badge buy">Mua</span>
+                  </div>
+                  <div className="tx-meta">
+                    Ngày: {signal.date}
+                  </div>
+                  <div className="tx-meta" style={{ 
+                    whiteSpace: 'nowrap', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis',
+                    maxWidth: '180px',
+                    fontStyle: 'italic',
+                    color: 'var(--text-muted)'
+                  }}>
+                    {signal.reason}
+                  </div>
+                </div>
+                <div className="tx-amount" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
+                  <div className="tx-amount-value" style={{ color: 'var(--text-main)', fontSize: '14px' }}>
+                    Vào: {formatVND(signal.entry_price)}
+                  </div>
+                  <div className="tx-amount-sub" style={{ color: 'var(--green)' }}>
+                    Chốt: {formatVND(signal.take_profit_price)}
+                  </div>
+                  <div className="tx-amount-sub" style={{ color: 'var(--red)' }}>
+                    Cắt: {formatVND(signal.stop_loss_price)}
+                  </div>
+                </div>
+                <div style={{ paddingLeft: 12, opacity: 0.4 }}>
+                  <ChevronRight size={16} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Reason Dialog */}
+      {selectedReason && (
+        <div className="modal-overlay" onClick={() => setSelectedReason(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Lý do khuyến nghị</h3>
+              <button className="icon-btn" onClick={() => setSelectedReason(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body" style={{ lineHeight: '1.6', fontSize: '15px' }}>
+              {selectedReason}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-primary" onClick={() => setSelectedReason(null)}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

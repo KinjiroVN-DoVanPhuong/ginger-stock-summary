@@ -81,3 +81,53 @@ export async function addCashEntry(entry) {
   const newRef = push(r);
   await set(newRef, { ...entry, createdAt: Date.now() });
 }
+
+// ─── BOT SIGNALS ──────────────────────────────────────────────────────────────
+
+export function subscribeTradingSignals(callback) {
+  if (!db) return noDb(callback);
+  const r = ref(db, 'trading_signals');
+  return onValue(r, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return callback([]);
+    const list = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+    // Sort by date descending
+    list.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
+    callback(list);
+  });
+}
+
+export function subscribeTradingSignalRequests(callback) {
+  if (!db) return noDb(callback);
+  const r = ref(db, 'trading_signal_request');
+  return onValue(r, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return callback([]);
+    const list = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+    list.sort((a, b) => b.created_at - a.created_at);
+    callback(list);
+  });
+}
+
+export async function requestTradingSignal() {
+  if (!db) throw new Error('Firebase not configured');
+  const r = ref(db, 'trading_signal_request');
+  const newRef = push(r);
+  
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const request_date = `${yyyy}-${mm}-${dd}`;
+  
+  await set(newRef, {
+    created_at: Date.now(),
+    request_date,
+    status: 'request',
+  });
+  return newRef.key;
+}
