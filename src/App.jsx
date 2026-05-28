@@ -8,7 +8,6 @@ import DashboardPage from './components/Dashboard/DashboardPage';
 import PortfolioPage from './components/Portfolio/PortfolioPage';
 import TransactionPage from './components/Transactions/TransactionPage';
 import CashPage from './components/Cash/CashPage';
-import SettingsPage from './components/Settings/SettingsPage';
 import {
   subscribeTransactions,
   addTransaction,
@@ -151,7 +150,6 @@ export default function App() {
               />
             }
           />
-          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
 
