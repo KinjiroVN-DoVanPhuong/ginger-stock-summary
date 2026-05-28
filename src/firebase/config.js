@@ -2,33 +2,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
-const STORAGE_KEY = 'ginger_firebase_config';
-
-// ─── Stored config helpers ────────────────────────────────────────────────────
-
-export function getStoredConfig() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const cfg = JSON.parse(raw);
-    // Require the minimum fields
-    if (!cfg.apiKey || !cfg.databaseURL || !cfg.projectId) return null;
-    return cfg;
-  } catch {
-    return null;
-  }
-}
-
-export function saveFirebaseConfig(config) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-}
-
-export function clearFirebaseConfig() {
-  localStorage.removeItem(STORAGE_KEY);
-}
-
 // ─── Firebase initialization ──────────────────────────────────────────────────
-// Attempt to initialise from localStorage. Falls back to env vars if present.
+// Initialise exclusively from environment variables
 
 let db = null;
 
@@ -52,12 +27,8 @@ const envConfig = import.meta.env.VITE_FIREBASE_API_KEY ? {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 } : null;
 
-const stored = getStoredConfig();
-
 if (envConfig) {
   tryInit(envConfig);
-} else if (stored) {
-  tryInit(stored);
 }
 
 export { db };
