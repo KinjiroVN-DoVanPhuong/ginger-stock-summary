@@ -12,12 +12,16 @@ const NAV_ITEMS = [
   { to: '/bot',          Icon: Bot,              label: 'Bot'       },
 ];
 
-export default function BottomNav() {
+export default function BottomNav({ userRole }) {
   const configured = isFirebaseConfigured();
+
+  const itemsToDisplay = userRole === 'guest' 
+    ? NAV_ITEMS.filter(item => item.to === '/bot')
+    : NAV_ITEMS;
 
   return (
     <nav className="bottom-nav">
-      {NAV_ITEMS.map(({ to, Icon, label }) => (
+      {itemsToDisplay.map(({ to, Icon, label }) => (
         <NavLink
           key={to}
           to={to}

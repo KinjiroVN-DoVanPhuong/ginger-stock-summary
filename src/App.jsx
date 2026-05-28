@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { TrendingUp } from 'lucide-react';
 import Header from './components/Layout/Header';
 import BottomNav from './components/Layout/BottomNav';
@@ -9,6 +9,7 @@ import PortfolioPage from './components/Portfolio/PortfolioPage';
 import TransactionPage from './components/Transactions/TransactionPage';
 import CashPage from './components/Cash/CashPage';
 import BotPage from './components/Bot/BotPage';
+import LoginPage from './components/Auth/LoginPage';
 import {
   subscribeTransactions,
   addTransaction,
@@ -45,6 +46,7 @@ function Toast({ message, onDone }) {
 export default function App() {
   const configured = isFirebaseConfigured();
 
+  const [userRole, setUserRole] = useState(localStorage.getItem('ginger_user_role'));
   const [transactions, setTransactions]   = useState(configured ? [] : SAMPLE_TRANSACTIONS);
   const [cashBalance, setCashBalanceState] = useState(configured ? 0 : SAMPLE_CASH_BALANCE);
   const [cashHistory, setCashHistory]     = useState(configured ? [] : SAMPLE_CASH_HISTORY);
@@ -103,6 +105,16 @@ export default function App() {
   }, [configured]);
 
   // ─── Loading screen ────────────────────────────────────────────────────────
+  
+  if (!userRole) {
+    return (
+      <LoginPage onLogin={(role) => {
+        localStorage.setItem('ginger_user_role', role);
+        setUserRole(role);
+      }} />
+    );
+  }
+
   if (loading) {
     return (
       <div style={{
@@ -124,39 +136,49 @@ export default function App() {
   return (
     <BrowserRouter>
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-      <Header cashBalance={cashBalance} isDemo={!configured} />
+      <Header cashBalance={cashBalance} isDemo={!configured} onLogout={() => {
+        localStorage.removeItem('ginger_user_role');
+        setUserRole(null);
+      }} />
 
       <main className="page-content">
         {!configured && <DemoBanner />}
         <Routes>
-          <Route path="/"
-            element={<DashboardPage transactions={transactions} cashBalance={cashBalance} />}
-          />
-          <Route path="/portfolio"
-            element={<PortfolioPage transactions={transactions} />}
-          />
-          <Route path="/transactions"
-            element={
-              <TransactionPage
-                transactions={transactions}
-                cashBalance={cashBalance}
-                onAddTransaction={handleAddTransaction}
-                onToast={showToast}
-                isDemo={!configured}
+          {userRole === 'admin' ? (
+            <>
+              <Route path="/"
+                element={<DashboardPage transactions={transactions} cashBalance={cashBalance} />}
               />
-            }
-          />
-          <Route path="/cash"
-            element={
-              <CashPage
-                cashBalance={cashBalance}
-                cashHistory={cashHistory}
-                onAddCash={handleAddCash}
-                onToast={showToast}
-                isDemo={!configured}
+              <Route path="/portfolio"
+                element={<PortfolioPage transactions={transactions} />}
               />
-            }
-          />
+              <Route path="/transactions"
+                element={
+                  <TransactionPage
+                    transactions={transactions}
+                    cashBalance={cashBalance}
+                    onAddTransaction={handleAddTransaction}
+                    onToast={showToast}
+                    isDemo={!configured}
+                  />
+                }
+              />
+              <Route path="/cash"
+                element={
+                  <CashPage
+                    cashBalance={cashBalance}
+                    cashHistory={cashHistory}
+                    onAddCash={handleAddCash}
+                    onToast={showToast}
+                    isDemo={!configured}
+                  />
+                }
+              />
+            </>
+          ) : (
+            <Route path="/" element={<Navigate to="/bot" replace />} />
+          )}
+          
           <Route path="/bot"
             element={
               <BotPage
@@ -167,10 +189,11 @@ export default function App() {
               />
             }
           />
+          {userRole === 'guest' && <Route path="*" element={<Navigate to="/bot" replace />} />}
         </Routes>
       </main>
 
-      <BottomNav />
+      <BottomNav userRole={userRole} />
     </BrowserRouter>
   );
 }
