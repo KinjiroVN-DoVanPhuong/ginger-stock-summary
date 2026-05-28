@@ -20,6 +20,7 @@ import {
   addCashEntry,
   subscribeTradingSignals,
   subscribeTradingSignalRequests,
+  subscribeCurrentPrices,
 } from './firebase/db';
 import { isFirebaseConfigured } from './firebase/config';
 import { calcBuy, calcSell } from './utils/calculator';
@@ -50,6 +51,7 @@ export default function App() {
   const [transactions, setTransactions]   = useState(configured ? [] : SAMPLE_TRANSACTIONS);
   const [cashBalance, setCashBalanceState] = useState(configured ? 0 : SAMPLE_CASH_BALANCE);
   const [cashHistory, setCashHistory]     = useState(configured ? [] : SAMPLE_CASH_HISTORY);
+  const [currentPrices, setCurrentPrices] = useState({});
   const [tradingSignals, setTradingSignals] = useState([]);
   const [signalRequests, setSignalRequests] = useState([]);
   const [toast, setToast]                 = useState(null);
@@ -67,10 +69,11 @@ export default function App() {
     });
     const unsubCash    = subscribeCash((bal) => setCashBalanceState(bal));
     const unsubHistory = subscribeCashHistory((data) => setCashHistory(data));
+    const unsubPrices = subscribeCurrentPrices((data) => setCurrentPrices(data));
     const unsubSignals = subscribeTradingSignals((data) => setTradingSignals(data));
     const unsubRequests = subscribeTradingSignalRequests((data) => setSignalRequests(data));
 
-    return () => { unsubTx(); unsubCash(); unsubHistory(); unsubSignals(); unsubRequests(); };
+    return () => { unsubTx(); unsubCash(); unsubHistory(); unsubPrices(); unsubSignals(); unsubRequests(); };
   }, [configured]);
 
   // ─── Handlers (only run when Firebase is configured) ───────────────────────
@@ -150,7 +153,7 @@ export default function App() {
                 element={<DashboardPage transactions={transactions} cashBalance={cashBalance} />}
               />
               <Route path="/portfolio"
-                element={<PortfolioPage transactions={transactions} />}
+                element={<PortfolioPage transactions={transactions} currentPrices={currentPrices} />}
               />
               <Route path="/transactions"
                 element={

@@ -131,3 +131,21 @@ export async function requestTradingSignal() {
   });
   return newRef.key;
 }
+
+// ─── CURRENT PRICES ───────────────────────────────────────────────────────────
+
+export function subscribeCurrentPrices(callback) {
+  if (!db) return noDb(() => callback({}));
+  const r = ref(db, 'current_prices');
+  return onValue(r, (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return callback({});
+    const pricesMap = {};
+    Object.values(data).forEach(item => {
+      if (item.symbol && item.price != null) {
+        pricesMap[item.symbol] = Number(item.price);
+      }
+    });
+    callback(pricesMap);
+  });
+}
