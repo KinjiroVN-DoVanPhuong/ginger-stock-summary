@@ -94,9 +94,6 @@ export default function BotPage({ tradingSignals, signalRequests, onToast, isDem
             const isBuy = true; // Assuming signals are generally buy recommendations, or we can check signal type if it exists
             return (
               <div key={signal.id || index} className="tx-item" style={{ cursor: 'pointer' }} onClick={() => setSelectedReason(signal.reason)}>
-                <div className="tx-icon buy">
-                  <Bot size={18} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />
-                </div>
                 <div className="tx-body">
                   <div className="tx-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <strong>{signal.symbol}</strong>
